@@ -36,6 +36,12 @@ jobs:
       
       - name: Type check admin
         run: cd services/admin && pnpm typecheck
+
+      - name: Type check landing
+        run: cd services/landing && pnpm typecheck
+
+      - name: Type check docs
+        run: cd services/docs && pnpm typecheck
       
       - name: Lint backend
         run: cd services/backend && pnpm lint
@@ -45,6 +51,9 @@ jobs:
       
       - name: Lint admin
         run: cd services/admin && pnpm lint
+
+      - name: Lint landing
+        run: cd services/landing && pnpm lint
       
       - name: Build backend
         run: cd services/backend && pnpm build || echo "No build script"
@@ -54,6 +63,9 @@ jobs:
       
       - name: Build admin
         run: cd services/admin && pnpm build
+
+      - name: Build docs
+        run: cd services/docs && pnpm build
       
       - name: Run backend tests
         run: |
