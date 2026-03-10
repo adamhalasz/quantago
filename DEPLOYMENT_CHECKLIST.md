@@ -71,6 +71,8 @@ Set these with `cd services/backend && wrangler secret put SECRET_NAME`:
 - [ ] Build admin: `cd services/admin && pnpm build`
 - [ ] Deploy admin: `cd services/admin && npx wrangler pages deploy dist --project-name=backtest-admin`
 
+Or use the convenience script: `pnpm run deploy:all`
+
 ### Option 3: GitHub Actions
 - [ ] Set all GitHub secrets (see `.github/SECRETS.md`)
 - [ ] Push to main branch
@@ -173,7 +175,7 @@ After completing pre-deployment:
 
 Or manually:
 ```bash
-pnpm deploy
+pnpm run deploy:all
 ```
 
 ---

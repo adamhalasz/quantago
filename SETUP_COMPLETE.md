@@ -85,10 +85,10 @@ pnpm typecheck          # Check TypeScript
 pnpm lint               # Lint all code
 pnpm check              # Full validation
 
-pnpm deploy             # Deploy all to production
-pnpm deploy:backend     # Deploy backend only
-pnpm deploy:frontend    # Deploy frontend only
-pnpm deploy:admin       # Deploy admin only
+pnpm run deploy:all      # Deploy all to production
+pnpm run deploy:backend  # Deploy backend only
+pnpm run deploy:frontend # Deploy frontend only
+pnpm run deploy:admin    # Deploy admin only
 ```
 
 ## 🔑 Next: Set Secrets

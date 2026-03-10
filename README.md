@@ -72,24 +72,21 @@ See [`.github/SECRETS.md`](.github/SECRETS.md) for quick reference.
 
 ### Manual Deployment
 
-**Backend**:
+**All services**:
 ```bash
-cd services/backend
-npx wrangler deploy
+pnpm run deploy:all
 ```
 
-**Frontend**:
+**Individual services**:
 ```bash
-cd services/frontend
-pnpm build
-npx wrangler pages deploy dist --project-name=backtest-frontend
-```
+# Backend
+pnpm run deploy:backend
 
-**Admin**:
-```bash
-cd services/admin
-pnpm build
-npx wrangler pages deploy dist --project-name=backtest-admin
+# Frontend
+pnpm run deploy:frontend
+
+# Admin
+pnpm run deploy:admin
 ```
 
 ## Infrastructure

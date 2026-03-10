@@ -211,7 +211,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 else
     echo ""
     echo -e "${YELLOW}Deployment skipped. To deploy later, run:${NC}"
-    echo "  pnpm deploy"
+    echo "  pnpm run deploy:all"
 fi
 
 echo ""

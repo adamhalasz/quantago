@@ -66,7 +66,7 @@ cd ../..
 
 #### 5. Deploy All Services
 ```bash
-pnpm deploy
+pnpm run deploy:all
 ```
 
 ### Option 3: GitHub Actions (Recommended for CI/CD)

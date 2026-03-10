@@ -18,7 +18,7 @@
     "deploy:backend": "cd services/backend && npx wrangler deploy",
     "deploy:frontend": "pnpm --filter @backtest/frontend build && cd services/frontend && npx wrangler pages deploy dist --project-name=backtest-frontend",
     "deploy:admin": "pnpm --filter @backtest/admin build && cd services/admin && npx wrangler pages deploy dist --project-name=backtest-admin",
-    "deploy": "pnpm deploy:backend && pnpm deploy:frontend && pnpm deploy:admin",
+    "deploy:all": "pnpm run deploy:backend && pnpm run deploy:frontend && pnpm run deploy:admin",
     "infra:preview": "pnpm --filter @backtest/infra preview",
     "infra:up": "pnpm --filter @backtest/infra up",
     "infra:destroy": "pnpm --filter @backtest/infra destroy"
