@@ -155,13 +155,6 @@ Whether you're a quantitative trader developing sophisticated strategies or a de
    - Navigate to the Backtest page
    - Configure your strategy and run your first backtest
 
-### Production Domains
-
-- Landing: https://quantago.co
-- Docs: https://docs.quantago.co
-- App: https://app.quantago.co
-- Admin: https://admin.quantago.co
-- API: https://api.quantago.co
 
 ### Verify Installation
 
