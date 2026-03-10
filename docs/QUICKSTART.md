@@ -1,17 +1,6 @@
 # Quick Start Guide
 
-Everything is now set up and ready to deploy! 🎉
-
-## ✅ What's Ready
-
-- All dependencies installed
-- TypeScript type checks passing
-- Production builds working
-- Infrastructure code configured
-- GitHub Actions workflows ready
-- Documentation complete
-
-## 🚀 Deploy to Production
+## Deploy to Production
 
 ### Option 1: Automated Setup Script
 
@@ -22,7 +11,7 @@ chmod +x setup.sh
 ./setup.sh
 ```
 
-This will guide you through:
+The script covers:
 - Creating Cloudflare Pages projects
 - Setting worker secrets
 - Deploying all services
@@ -74,13 +63,13 @@ This will execute deployment scripts located in `scripts/` directory:
 - `deploy-frontend.sh` - Builds and deploys the frontend to Pages
 - `deploy-admin.sh` - Builds and deploys the admin dashboard to Pages
 
-### Option 3: GitHub Actions (Recommended for CI/CD)
+### Option 3: GitHub Actions
 
 1. Set GitHub Secrets (see [docs/SECRETS.md](SECRETS.md))
 2. Push to `main` branch
 3. GitHub Actions will automatically deploy
 
-## 📦 What to Deploy
+## Services
 
 ### Backend Worker
 - **API endpoints**: All backend routes
@@ -95,7 +84,7 @@ This will execute deployment scripts located in `scripts/` directory:
 - **Admin dashboard**: Ingestion management
 - **URL**: `backtest-admin.pages.dev`
 
-## 🔑 Required Secrets
+## Required Secrets
 
 Generate secrets:
 ```bash
@@ -114,14 +103,14 @@ Set in Cloudflare:
 - CLICKHOUSE_USERNAME
 - CLICKHOUSE_PASSWORD
 
-## 🌐 Custom Domains (Optional)
+## Custom Domains
 
 After deployment, add custom domains in Cloudflare Dashboard:
 - `api.yourdomain.com` → Backend Worker
 - `backtest.yourdomain.com` → Frontend Pages
 - `admin.yourdomain.com` → Admin Pages
 
-## 📊 ClickHouse Setup
+## ClickHouse Setup
 
 Ensure database exists:
 ```sql
@@ -130,7 +119,7 @@ CREATE DATABASE IF NOT EXISTS market_data;
 
 Schema will be auto-created on first ingestion.
 
-## 👤 Create Admin User
+## Create Admin User
 
 After deployment, run this SQL on your production database:
 
@@ -151,27 +140,14 @@ VALUES (
 );
 ```
 
-## ✨ Next Steps
-
-1. **Test locally**: Services are running at:
-   - Backend: http://localhost:8788
-   - Frontend: http://localhost:5173
-   - Admin: http://localhost:5176
-
-2. **Deploy to production**: Run `./setup.sh` or `pnpm deploy`
-
-3. **Set up CI/CD**: Configure GitHub secrets for automated deployments
-
-4. **Monitor**: Use `wrangler tail` to view logs
-
-## 📚 Documentation
+## Documentation
 
 - **Deployment Guide**: [docs/DEPLOYMENT.md](DEPLOYMENT.md)
 - **GitHub Secrets**: [docs/SECRETS.md](SECRETS.md)
 - **Infrastructure**: [infra/README.md](../infra/README.md)
 - **Root README**: [README.md](../README.md)
 
-## 💡 Quick Commands
+## Commands
 
 ```bash
 # Start all services locally
@@ -184,7 +160,7 @@ pnpm typecheck
 pnpm build
 
 # Deploy everything
-pnpm deploy
+pnpm run deploy:all
 
 # Deploy individual services
 pnpm deploy:backend
@@ -192,15 +168,11 @@ pnpm deploy:frontend
 pnpm deploy:admin
 ```
 
-## ❓ Need Help?
+## Verification
 
-Check the documentation or verify:
-- ✅ All secrets are set
-- ✅ Database migrations are run
-- ✅ ClickHouse database exists
-- ✅ Logged in to Cloudflare (`wrangler whoami`)
-- ✅ Pages projects are created
-
----
-
-**Ready to deploy?** Run `./setup.sh` to get started! 🚀
+Before deploying, verify:
+- All required secrets are configured
+- Database migrations have been applied
+- The `market_data` ClickHouse database exists
+- `npx wrangler whoami` succeeds
+- The `backtest-frontend` and `backtest-admin` Pages projects exist

@@ -73,6 +73,9 @@ After adding all secrets, they should appear in your secrets list (values are hi
 - ✅ INGESTION_ADMIN_SECRET
 - ✅ VITE_API_URL
 
+Backend runtime secrets are required in GitHub only if the workflow should create or rotate Cloudflare Worker secrets.
+If the Worker secrets are already configured in Cloudflare, the backend deploy job can run without the database and ClickHouse secrets in GitHub.
+
 ## Optional: Pulumi Secrets
 
 If using Pulumi for infrastructure management:

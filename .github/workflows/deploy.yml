@@ -87,7 +87,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Validate backend deploy secrets
+      - name: Check backend deploy secrets
+        id: backend-secrets
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
@@ -99,16 +100,19 @@ jobs:
           missing=0
           for secret_name in DATABASE_URL BETTER_AUTH_SECRET INGESTION_ADMIN_SECRET CLICKHOUSE_URL CLICKHOUSE_USERNAME CLICKHOUSE_PASSWORD; do
             if [ -z "${!secret_name}" ]; then
-              echo "Missing required GitHub secret: ${secret_name}"
+              echo "Missing GitHub secret for backend upload: ${secret_name}"
               missing=1
             fi
           done
 
-          if [ "$missing" -ne 0 ]; then
-            exit 1
+          if [ "$missing" -eq 0 ]; then
+            echo "upload=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "upload=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Write backend secret bundle
+        if: steps.backend-secrets.outputs.upload == 'true'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
@@ -133,20 +137,21 @@ jobs:
           EOF
 
       - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: services/backend
-          command: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm --dir services/backend exec wrangler deploy
 
       - name: Upload backend secrets
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: services/backend
-          command: secret bulk .deploy-secrets.json
+        if: steps.backend-secrets.outputs.upload == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm --dir services/backend exec wrangler secret bulk .deploy-secrets.json
+
+      - name: Skip backend secret upload
+        if: steps.backend-secrets.outputs.upload != 'true'
+        run: echo "Skipping backend secret upload. Existing Cloudflare Worker secrets will be used."
 
       - name: Remove backend secret bundle
         if: always()
@@ -185,12 +190,10 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
       
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: services/frontend
-          command: pages deploy dist --project-name=backtest-frontend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm --dir services/frontend exec wrangler pages deploy dist --project-name=backtest-frontend
 
   # ============================================================================
   # Deploy Admin Pages
@@ -225,9 +228,7 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
       
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: services/admin
-          command: pages deploy dist --project-name=backtest-admin
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm --dir services/admin exec wrangler pages deploy dist --project-name=backtest-admin
