@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "author": "adamhalasz",
   "scripts": {
     "dev": "concurrently \"pnpm --filter @quantago/api dev\" \"pnpm --filter @quantago/frontend dev\" \"pnpm --filter @quantago/admin dev\"",
     "dev:backend": "pnpm --filter @quantago/api dev",

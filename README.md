@@ -367,6 +367,6 @@ Built with amazing open-source technologies:
 
 **[⬆ Back to Top](#-backtest-platform)**
 
-Made with ❤️ by the open-source community
+Made with ❤️ by Adam Halasz
 
 </div>
