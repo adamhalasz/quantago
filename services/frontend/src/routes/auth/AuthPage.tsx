@@ -33,7 +33,6 @@ export function AuthPage() {
 					name: formData.name,
 					email: formData.email,
 					password: formData.password,
-					callbackURL: '/',
 				});
 
 				if (result.error) {
@@ -43,7 +42,6 @@ export function AuthPage() {
 				const result = await signIn.email({
 					email: formData.email,
 					password: formData.password,
-					callbackURL: '/',
 				});
 
 				if (result.error) {
@@ -82,6 +80,7 @@ export function AuthPage() {
 							className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
 							value={formData.name}
 							onChange={(event) => setFormData((prev) => ({ ...prev, name: event.target.value }))}
+							autoComplete="name"
 							required
 						/>
 					</div>
@@ -94,6 +93,7 @@ export function AuthPage() {
 						type="email"
 						value={formData.email}
 						onChange={(event) => setFormData((prev) => ({ ...prev, email: event.target.value }))}
+						autoComplete="email"
 						required
 					/>
 				</div>
@@ -105,6 +105,7 @@ export function AuthPage() {
 						type="password"
 						value={formData.password}
 						onChange={(event) => setFormData((prev) => ({ ...prev, password: event.target.value }))}
+						autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
 						required
 						minLength={6}
 					/>

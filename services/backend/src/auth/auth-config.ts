@@ -4,12 +4,17 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getDb } from '../db/client';
 import { authSchema } from '../db/auth-schema';
 import type { AppEnv, BackendEnv } from '../worker-types';
-import { getAuthBaseUrl, getTrustedOrigins } from './auth-env';
+import { getAuthBaseUrl, getTrustedOrigins, shouldUseCrossSiteAuthCookies } from './auth-env';
 
 export const createAuth = (env: BackendEnv, request?: Request) => betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: getAuthBaseUrl(env, request),
   trustedOrigins: (currentRequest) => getTrustedOrigins(env, currentRequest),
+  advanced: {
+    defaultCookieAttributes: {
+      sameSite: shouldUseCrossSiteAuthCookies(env, request) ? 'none' : 'lax',
+    },
+  },
   database: drizzleAdapter(getDb(env), {
     provider: 'pg',
     schema: authSchema,

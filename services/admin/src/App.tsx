@@ -1,45 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useSession } from './lib/auth-client';
+import { signOut, useSession } from './lib/auth-client';
 import { AdminLogin } from './components/AdminLogin';
 import { AdminDashboard } from './components/AdminDashboard';
 
 function App() {
   const { data: session, isPending } = useSession();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const role = session?.user && 'role' in session.user ? session.user.role : null;
+  const isAdmin = role === 'admin';
 
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (isPending) return;
-
-      if (!session?.user) {
-        setIsAdmin(false);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/session');
-        const data = await response.json();
-        
-        setIsAdmin(data.user?.role === 'admin');
-      } catch (error) {
-        console.error('Failed to check admin status:', error);
-        setIsAdmin(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAdminStatus();
-  }, [session, isPending]);
-
-  const handleLoginSuccess = () => {
-    setIsAdmin(true);
-    setIsLoading(false);
-  };
-
-  if (isLoading || isPending) {
+  if (isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
@@ -47,8 +15,30 @@ function App() {
     );
   }
 
-  if (!session?.user || !isAdmin) {
-    return <AdminLogin onLoginSuccess={handleLoginSuccess} />;
+  if (!session?.user) {
+    return <AdminLogin />;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+        <div className="w-full max-w-md rounded-lg border bg-white p-6 shadow-sm space-y-4">
+          <h1 className="text-xl font-semibold">Admin access required</h1>
+          <p className="text-sm text-muted-foreground">
+            This account is authenticated, but it does not have the admin role.
+          </p>
+          <button
+            className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium"
+            onClick={() => {
+              void signOut();
+            }}
+            type="button"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return <AdminDashboard />;

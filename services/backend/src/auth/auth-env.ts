@@ -12,6 +12,25 @@ const normalizeOrigin = (origin: string) => origin.replace(/\/$/, '');
 
 const isLoopbackOrigin = (origin: string) => /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 const isDefaultPagesOrigin = (origin: string) => DEFAULT_PAGES_ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
+const isIpAddress = (hostname: string) => /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
+
+const getSiteKey = (origin: string) => {
+	try {
+		const url = new URL(origin);
+		const { hostname, protocol } = url;
+
+		if (hostname === 'localhost' || isIpAddress(hostname)) {
+			return `${protocol}//${hostname}`;
+		}
+
+		const parts = hostname.split('.');
+		const registrableDomain = parts.length >= 2 ? parts.slice(-2).join('.') : hostname;
+
+		return `${protocol}//${registrableDomain}`;
+	} catch {
+		return origin;
+	}
+};
 
 const getAdminOrigin = (env: BackendEnv) => env.ADMIN_ORIGIN ? normalizeOrigin(env.ADMIN_ORIGIN) : '';
 
@@ -50,6 +69,13 @@ export const getTrustedOrigins = (env: BackendEnv, request?: Request) => {
 	}
 
 	return [...new Set(origins.filter(Boolean))];
+};
+
+export const shouldUseCrossSiteAuthCookies = (env: BackendEnv, request?: Request) => {
+	const authSite = getSiteKey(getAuthBaseUrl(env, request));
+	const appOrigins = [getFrontendOrigin(env), getAdminOrigin(env), getRequestOrigin(request)].filter(Boolean);
+
+	return appOrigins.some((origin) => getSiteKey(origin) !== authSite);
 };
 
 export const isAllowedCorsOrigin = (origin: string, env: BackendEnv, request?: Request) => {

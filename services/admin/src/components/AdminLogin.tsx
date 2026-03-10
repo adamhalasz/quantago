@@ -1,15 +1,11 @@
 import { useState } from 'react';
-import { signIn } from '@/lib/auth-client';
+import { signIn, signOut } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface AdminLoginProps {
-  onLoginSuccess: () => void;
-}
-
-export function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
+export function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -32,17 +28,14 @@ export function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
         return;
       }
 
-      // Verify admin role
-      const response = await fetch('/api/session');
-      const data = await response.json();
+      const role = result.data?.user && 'role' in result.data.user ? result.data.user.role : null;
 
-      if (data.user?.role !== 'admin') {
+      if (role && role !== 'admin') {
+        await signOut();
         setError('Access denied: Admin privileges required');
         setLoading(false);
         return;
       }
-
-      onLoginSuccess();
     } catch {
       setError('An unexpected error occurred');
       setLoading(false);

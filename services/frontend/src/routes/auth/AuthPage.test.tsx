@@ -42,7 +42,6 @@ describe('AuthPage', () => {
     expect(signIn.email).toHaveBeenCalledWith({
       email: 'ada@example.com',
       password: 'password123',
-      callbackURL: '/',
     });
   });
 });

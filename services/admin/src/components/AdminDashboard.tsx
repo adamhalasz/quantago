@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { signOut } from '@/lib/auth-client';
+import { getApiBaseUrl, signOut } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,10 +22,11 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const eventSourceRef = useRef<EventSource | null>(null);
+  const apiBaseUrl = getApiBaseUrl();
 
   useEffect(() => {
     // Connect to SSE endpoint for realtime updates
-    const eventSource = new EventSource('/api/admin/ingestion/events');
+    const eventSource = new EventSource(`${apiBaseUrl}/api/admin/ingestion/events`, { withCredentials: true });
     eventSourceRef.current = eventSource;
 
     eventSource.onmessage = (event) => {
@@ -44,15 +45,16 @@ export function AdminDashboard() {
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [apiBaseUrl]);
 
   const handleRunIngestion = async () => {
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('/api/admin/ingestion/run-once', {
+      const response = await fetch(`${apiBaseUrl}/api/admin/ingestion/run-once`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
