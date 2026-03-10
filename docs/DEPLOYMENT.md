@@ -19,7 +19,7 @@ Configure the following secrets in your GitHub repository (Settings → Secrets 
 | Secret Name | Description | Example |
 |------------|-------------|---------|
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers/Pages permissions | `your-cloudflare-api-token` |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID stored as a GitHub variable or secret | `abc123def456` |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID stored as a GitHub environment secret | `abc123def456` |
 | `DATABASE_URL` | Neon PostgreSQL connection string | `postgresql://user:pass@host/db` |
 | `BETTER_AUTH_SECRET` | Secret key for auth sessions (min 32 chars) | `your-random-secret-key-here` |
 | `INGESTION_ADMIN_SECRET` | Secret for ingestion admin endpoints | `your-ingestion-secret` |
@@ -37,6 +37,9 @@ The backend must trust the deployed frontend and admin origins. Set these values
 | `BETTER_AUTH_URL` | Public backend auth/API origin | `https://api.backtest.yourdomain.com` |
 | `FRONTEND_ORIGIN` | Main frontend origin | `https://backtest.yourdomain.com` |
 | `ADMIN_ORIGIN` | Admin frontend origin | `https://admin.yourdomain.com` |
+
+The GitHub deploy workflow validates these values before deploying and injects them into the backend Worker at deploy time.
+It also requires `VITE_API_URL` for frontend and admin builds so Pages deployments cannot fall back to localhost or same-origin auth paths.
 
 ### How to Get Cloudflare Credentials
 

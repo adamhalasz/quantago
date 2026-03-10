@@ -1,5 +1,5 @@
 import type { BackendEnv } from '../worker-types';
-import type { MarketDataProvider, MarketDataProviderId } from './market-data-types';
+import type { MarketDataProviderId } from './market-data-types';
 import { createClickHouseMarketDataProvider } from './market-data-clickhouse-provider';
 import { yahooMarketDataProvider } from './market-data-yahoo-provider';
 

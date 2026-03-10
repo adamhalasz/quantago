@@ -13,7 +13,7 @@ Value: [Get from: https://dash.cloudflare.com/profile/api-tokens]
 
 ```
 Name: CLOUDFLARE_ACCOUNT_ID
-Value: [Set as a GitHub repository variable or secret]
+Value: [Set as a GitHub environment secret]
 ```
 
 ### Database Credentials
@@ -64,6 +64,13 @@ The backend deployment must also use non-secret runtime variables for:
 - `BETTER_AUTH_URL`
 - `FRONTEND_ORIGIN`
 - `ADMIN_ORIGIN`
+
+Recommended GitHub placement:
+
+- `VITE_API_URL` as a `production` environment secret or variable
+- `BETTER_AUTH_URL` as a `production` environment variable
+- `FRONTEND_ORIGIN` as a `production` environment variable
+- `ADMIN_ORIGIN` as a `production` environment variable
 
 ## Verification
 

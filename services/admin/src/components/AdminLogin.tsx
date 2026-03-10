@@ -66,6 +66,7 @@ export function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
                 id="email"
                 type="email"
                 placeholder="admin@example.com"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -77,6 +78,7 @@ export function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
               <Input
                 id="password"
                 type="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

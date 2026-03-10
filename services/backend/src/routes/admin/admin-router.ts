@@ -26,7 +26,7 @@ adminRouter.get('/ingestion/events', (c) => {
     const interval = setInterval(async () => {
       try {
         await stream.writeln('data: {"type":"heartbeat","timestamp":"' + new Date().toISOString() + '"}\n');
-      } catch (error) {
+      } catch {
         clearInterval(interval);
       }
     }, 30000); // Heartbeat every 30 seconds

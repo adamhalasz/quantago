@@ -15,7 +15,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
 jobs:
   # ============================================================================
@@ -40,6 +40,26 @@ jobs:
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Validate backend production configuration
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL || secrets.BETTER_AUTH_URL }}
+          FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN || secrets.FRONTEND_ORIGIN }}
+          ADMIN_ORIGIN: ${{ vars.ADMIN_ORIGIN || secrets.ADMIN_ORIGIN }}
+        run: |
+          missing=0
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID BETTER_AUTH_URL FRONTEND_ORIGIN ADMIN_ORIGIN; do
+            if [ -z "${!name}" ]; then
+              echo "Missing required production setting: ${name}"
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
       
       - name: Type check backend
         run: cd services/backend && pnpm typecheck
@@ -145,11 +165,34 @@ jobs:
           fs.writeFileSync('services/backend/.deploy-secrets.json', JSON.stringify(secrets, null, 2));
           EOF
 
+      - name: Write backend production config
+        env:
+          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL || secrets.BETTER_AUTH_URL }}
+          FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN || secrets.FRONTEND_ORIGIN }}
+          ADMIN_ORIGIN: ${{ vars.ADMIN_ORIGIN || secrets.ADMIN_ORIGIN }}
+        run: |
+          node <<'EOF'
+          const fs = require('node:fs');
+
+          const configPath = 'services/backend/wrangler.jsonc';
+          const outputPath = 'services/backend/wrangler.production.jsonc';
+          const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+
+          config.vars = {
+            ...(config.vars || {}),
+            BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
+            FRONTEND_ORIGIN: process.env.FRONTEND_ORIGIN,
+            ADMIN_ORIGIN: process.env.ADMIN_ORIGIN,
+          };
+
+          fs.writeFileSync(outputPath, JSON.stringify(config, null, 2));
+          EOF
+
       - name: Deploy to Cloudflare Workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
-        run: pnpm --dir services/backend exec wrangler deploy
+        run: pnpm --dir services/backend exec wrangler deploy --config wrangler.production.jsonc
 
       - name: Upload backend secrets
         if: steps.backend-secrets.outputs.upload == 'true'
@@ -164,7 +207,7 @@ jobs:
 
       - name: Remove backend secret bundle
         if: always()
-        run: rm -f services/backend/.deploy-secrets.json
+        run: rm -f services/backend/.deploy-secrets.json services/backend/wrangler.production.jsonc
 
   # ============================================================================
   # Deploy Frontend Pages
@@ -193,11 +236,29 @@ jobs:
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Validate frontend production configuration
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
+        run: |
+          missing=0
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID VITE_API_URL; do
+            if [ -z "${!name}" ]; then
+              echo "Missing required frontend setting: ${name}"
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
       
       - name: Build frontend
         run: pnpm --filter @backtest/frontend build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
       
       - name: Deploy to Cloudflare Pages
         env:
@@ -232,11 +293,29 @@ jobs:
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Validate admin production configuration
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
+        run: |
+          missing=0
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID VITE_API_URL; do
+            if [ -z "${!name}" ]; then
+              echo "Missing required admin setting: ${name}"
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
       
       - name: Build admin
         run: pnpm --filter @backtest/admin build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
       
       - name: Deploy to Cloudflare Pages
         env:

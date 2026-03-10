@@ -3,7 +3,7 @@ import { ensureClickHouseSchema, replaceOHLCVRange } from '../../lib/clickhouse'
 import { fetchCcxtIngestionRows } from '../../lib/ingestion/ccxt';
 import { fetchFxMinuteRows } from '../../lib/ingestion/fx-minute-data';
 import { buildFallbackSymbolDefinition, getDefaultIngestionSource, listDefaultIngestionSymbols, resolveDefaultIngestionSymbol } from '../../lib/ingestion/symbols';
-import type { IngestionRequest, IngestionSymbolDefinition, IngestionTimeframe, IngestionWorkflowType, OHLCVRow } from '../../lib/ingestion/types';
+import type { IngestionRequest, IngestionSymbolDefinition, IngestionTimeframe, OHLCVRow } from '../../lib/ingestion/types';
 import { fetchYahooIngestionRows } from '../../lib/ingestion/yahoo';
 import type { MarketAssetClass } from '../../lib/market-data-types';
 import type { BackendEnv } from '../../worker-types';
