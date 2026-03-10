@@ -13,7 +13,7 @@
     "build:frontend": "pnpm --filter @backtest/frontend build",
     "build:admin": "pnpm --filter @backtest/admin build",
     "typecheck": "pnpm --filter @backtest/api typecheck && pnpm --filter @backtest/frontend typecheck && pnpm --filter @backtest/admin typecheck",
-    "lint": "pnpm --filter @backtest/frontend lint && pnpm --filter @backtest/admin lint",
+    "lint": "pnpm --filter @backtest/api lint && pnpm --filter @backtest/frontend lint && pnpm --filter @backtest/admin lint",
     "check": "pnpm typecheck && pnpm lint",
     "deploy:backend": "bash scripts/deploy-backend.sh",
     "deploy:frontend": "bash scripts/deploy-frontend.sh",

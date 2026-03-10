@@ -43,12 +43,7 @@ jobs:
         run: cd services/admin && pnpm typecheck
       
       - name: Lint backend
-        run: |
-          if [ -f "services/backend/package.json" ] && grep -q '"lint"' services/backend/package.json; then
-            cd services/backend && pnpm lint
-          else
-            echo "Skipping backend lint: no lint script defined"
-          fi
+        run: cd services/backend && pnpm lint
       
       - name: Lint frontend
         run: cd services/frontend && pnpm lint
@@ -90,22 +85,9 @@ jobs:
           cache: 'pnpm'
       
       - name: Install dependencies
-        run: cd services/backend && pnpm install --frozen-lockfile
-      
-      - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: services/backend
-          command: deploy
-          secrets: |
-            DATABASE_URL
-            BETTER_AUTH_SECRET
-            INGESTION_ADMIN_SECRET
-            CLICKHOUSE_URL
-            CLICKHOUSE_USERNAME
-            CLICKHOUSE_PASSWORD
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate backend deploy secrets
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
@@ -113,6 +95,62 @@ jobs:
           CLICKHOUSE_URL: ${{ secrets.CLICKHOUSE_URL }}
           CLICKHOUSE_USERNAME: ${{ secrets.CLICKHOUSE_USERNAME }}
           CLICKHOUSE_PASSWORD: ${{ secrets.CLICKHOUSE_PASSWORD }}
+        run: |
+          missing=0
+          for secret_name in DATABASE_URL BETTER_AUTH_SECRET INGESTION_ADMIN_SECRET CLICKHOUSE_URL CLICKHOUSE_USERNAME CLICKHOUSE_PASSWORD; do
+            if [ -z "${!secret_name}" ]; then
+              echo "Missing required GitHub secret: ${secret_name}"
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Write backend secret bundle
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          INGESTION_ADMIN_SECRET: ${{ secrets.INGESTION_ADMIN_SECRET }}
+          CLICKHOUSE_URL: ${{ secrets.CLICKHOUSE_URL }}
+          CLICKHOUSE_USERNAME: ${{ secrets.CLICKHOUSE_USERNAME }}
+          CLICKHOUSE_PASSWORD: ${{ secrets.CLICKHOUSE_PASSWORD }}
+        run: |
+          node <<'EOF'
+          const fs = require('node:fs');
+
+          const secrets = {
+            DATABASE_URL: process.env.DATABASE_URL,
+            BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+            INGESTION_ADMIN_SECRET: process.env.INGESTION_ADMIN_SECRET,
+            CLICKHOUSE_URL: process.env.CLICKHOUSE_URL,
+            CLICKHOUSE_USERNAME: process.env.CLICKHOUSE_USERNAME,
+            CLICKHOUSE_PASSWORD: process.env.CLICKHOUSE_PASSWORD,
+          };
+
+          fs.writeFileSync('services/backend/.deploy-secrets.json', JSON.stringify(secrets, null, 2));
+          EOF
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: services/backend
+          command: deploy
+
+      - name: Upload backend secrets
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: services/backend
+          command: secret bulk .deploy-secrets.json
+
+      - name: Remove backend secret bundle
+        if: always()
+        run: rm -f services/backend/.deploy-secrets.json
 
   # ============================================================================
   # Deploy Frontend Pages
@@ -139,10 +177,10 @@ jobs:
           cache: 'pnpm'
       
       - name: Install dependencies
-        run: cd services/frontend && pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
       
       - name: Build frontend
-        run: cd services/frontend && pnpm build
+        run: pnpm --filter @backtest/frontend build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
       
@@ -151,7 +189,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy services/frontend/dist --project-name=backtest-frontend
+          workingDirectory: services/frontend
+          command: pages deploy dist --project-name=backtest-frontend
 
   # ============================================================================
   # Deploy Admin Pages
@@ -178,10 +217,10 @@ jobs:
           cache: 'pnpm'
       
       - name: Install dependencies
-        run: cd services/admin && pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
       
       - name: Build admin
-        run: cd services/admin && pnpm build
+        run: pnpm --filter @backtest/admin build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
       
@@ -190,4 +229,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy services/admin/dist --project-name=backtest-admin
+          workingDirectory: services/admin
+          command: pages deploy dist --project-name=backtest-admin
