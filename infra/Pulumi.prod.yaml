@@ -1,0 +1,13 @@
+config:
+  cloudflareAccountId: "" # Set via: pulumi config set cloudflareAccountId YOUR_ACCOUNT_ID
+  zoneName: "example.com" # Set via: pulumi config set zoneName your-domain.com
+  frontendOrigin: "https://backtest.example.com"
+  betterAuthUrl: "https://api.backtest.example.com"
+  
+  # Secrets (set via: pulumi config set --secret KEY value)
+  # databaseUrl: ""
+  # betterAuthSecret: ""
+  # ingestionAdminSecret: ""
+  # clickhouseUrl: ""
+  # clickhouseUsername: ""
+  # clickhousePassword: ""

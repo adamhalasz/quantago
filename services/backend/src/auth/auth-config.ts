@@ -18,6 +18,15 @@ export const createAuth = (env: BackendEnv, request?: Request) => betterAuth({
     enabled: true,
     minPasswordLength: 6,
   },
+  user: {
+    additionalFields: {
+      role: {
+        type: 'string',
+        required: false,
+        defaultValue: 'user',
+      },
+    },
+  },
 });
 
 export const authRouter = new Hono<AppEnv>().all('/*', (c) => {

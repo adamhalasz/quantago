@@ -1,0 +1,34 @@
+{
+  "name": "@backtest/monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter @backtest/api dev\" \"pnpm --filter @backtest/frontend dev\" \"pnpm --filter @backtest/admin dev\"",
+    "dev:backend": "pnpm --filter @backtest/api dev",
+    "dev:frontend": "pnpm --filter @backtest/frontend dev",
+    "dev:admin": "pnpm --filter @backtest/admin dev",
+    "build": "pnpm --filter @backtest/api typecheck && pnpm --filter @backtest/frontend build && pnpm --filter @backtest/admin build",
+    "build:backend": "pnpm --filter @backtest/api typecheck",
+    "build:frontend": "pnpm --filter @backtest/frontend build",
+    "build:admin": "pnpm --filter @backtest/admin build",
+    "typecheck": "pnpm --filter @backtest/api typecheck && pnpm --filter @backtest/frontend typecheck && pnpm --filter @backtest/admin typecheck",
+    "lint": "pnpm --filter @backtest/api lint && pnpm --filter @backtest/frontend lint && pnpm --filter @backtest/admin lint",
+    "check": "pnpm typecheck && pnpm lint",
+    "deploy:backend": "cd services/backend && npx wrangler deploy",
+    "deploy:frontend": "pnpm --filter @backtest/frontend build && cd services/frontend && npx wrangler pages deploy dist --project-name=backtest-frontend",
+    "deploy:admin": "pnpm --filter @backtest/admin build && cd services/admin && npx wrangler pages deploy dist --project-name=backtest-admin",
+    "deploy": "pnpm deploy:backend && pnpm deploy:frontend && pnpm deploy:admin",
+    "infra:preview": "pnpm --filter @backtest/infra preview",
+    "infra:up": "pnpm --filter @backtest/infra up",
+    "infra:destroy": "pnpm --filter @backtest/infra destroy"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

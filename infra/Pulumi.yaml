@@ -1,0 +1,6 @@
+name: backtest
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+description: Backtest platform infrastructure on Cloudflare

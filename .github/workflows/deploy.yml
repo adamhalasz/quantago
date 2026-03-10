@@ -1,0 +1,196 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ============================================================================
+  # Tests and Checks
+  # ============================================================================
+  
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Type check backend
+        run: cd services/backend && pnpm typecheck
+      
+      - name: Type check frontend
+        run: cd services/frontend && pnpm typecheck
+      
+      - name: Type check admin
+        run: cd services/admin && pnpm typecheck
+      
+      - name: Lint backend
+        run: cd services/backend && pnpm lint
+      
+      - name: Lint frontend
+        run: cd services/frontend && pnpm lint
+      
+      - name: Lint admin
+        run: cd services/admin && pnpm lint
+      
+      - name: Run tests
+        run: |
+          if [ -f "services/backend/package.json" ] && grep -q '"test"' services/backend/package.json; then
+            cd services/backend && pnpm test
+          fi
+          if [ -f "services/frontend/package.json" ] && grep -q '"test"' services/frontend/package.json; then
+            cd services/frontend && pnpm test
+          fi
+
+  # ============================================================================
+  # Deploy Backend Worker
+  # ============================================================================
+  
+  deploy-backend:
+    name: Deploy Backend Worker
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: cd services/backend && pnpm install --frozen-lockfile
+      
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: services/backend
+          command: deploy
+          secrets: |
+            DATABASE_URL
+            BETTER_AUTH_SECRET
+            INGESTION_ADMIN_SECRET
+            CLICKHOUSE_URL
+            CLICKHOUSE_USERNAME
+            CLICKHOUSE_PASSWORD
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          INGESTION_ADMIN_SECRET: ${{ secrets.INGESTION_ADMIN_SECRET }}
+          CLICKHOUSE_URL: ${{ secrets.CLICKHOUSE_URL }}
+          CLICKHOUSE_USERNAME: ${{ secrets.CLICKHOUSE_USERNAME }}
+          CLICKHOUSE_PASSWORD: ${{ secrets.CLICKHOUSE_PASSWORD }}
+
+  # ============================================================================
+  # Deploy Frontend Pages
+  # ============================================================================
+  
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: cd services/frontend && pnpm install --frozen-lockfile
+      
+      - name: Build frontend
+        run: cd services/frontend && pnpm build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+      
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy services/frontend/dist --project-name=backtest-frontend
+
+  # ============================================================================
+  # Deploy Admin Pages
+  # ============================================================================
+  
+  deploy-admin:
+    name: Deploy Admin
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: cd services/admin && pnpm install --frozen-lockfile
+      
+      - name: Build admin
+        run: cd services/admin && pnpm build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+      
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy services/admin/dist --project-name=backtest-admin

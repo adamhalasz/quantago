@@ -1,0 +1,21 @@
+{
+  "name": "@backtest/infra",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "preview": "pulumi preview",
+    "up": "pulumi up",
+    "destroy": "pulumi destroy",
+    "refresh": "pulumi refresh",
+    "stack": "pulumi stack"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@pulumi/cloudflare": "^5.42.0",
+    "@pulumi/pulumi": "^3.140.0"
+  }
+}

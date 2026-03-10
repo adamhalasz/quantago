@@ -43,7 +43,7 @@ export function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
       }
 
       onLoginSuccess();
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
       setLoading(false);
     }
