@@ -40,26 +40,6 @@ jobs:
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Validate backend production configuration
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
-          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL || secrets.BETTER_AUTH_URL }}
-          FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN || secrets.FRONTEND_ORIGIN }}
-          ADMIN_ORIGIN: ${{ vars.ADMIN_ORIGIN || secrets.ADMIN_ORIGIN }}
-        run: |
-          missing=0
-          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID BETTER_AUTH_URL FRONTEND_ORIGIN ADMIN_ORIGIN; do
-            if [ -z "${!name}" ]; then
-              echo "Missing required production setting: ${name}"
-              missing=1
-            fi
-          done
-
-          if [ "$missing" -ne 0 ]; then
-            exit 1
-          fi
       
       - name: Type check backend
         run: cd services/backend && pnpm typecheck
@@ -116,6 +96,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate backend production configuration
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL }}
+          FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN }}
+          ADMIN_ORIGIN: ${{ vars.ADMIN_ORIGIN }}
+        run: |
+          missing=0
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID BETTER_AUTH_URL FRONTEND_ORIGIN ADMIN_ORIGIN; do
+            if [ -z "${!name}" ]; then
+              echo "Missing required production setting: ${name}"
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
       - name: Check backend deploy secrets
         id: backend-secrets
         env:
@@ -167,9 +167,9 @@ jobs:
 
       - name: Write backend production config
         env:
-          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL || secrets.BETTER_AUTH_URL }}
-          FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN || secrets.FRONTEND_ORIGIN }}
-          ADMIN_ORIGIN: ${{ vars.ADMIN_ORIGIN || secrets.ADMIN_ORIGIN }}
+          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL }}
+          FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN }}
+          ADMIN_ORIGIN: ${{ vars.ADMIN_ORIGIN }}
         run: |
           node <<'EOF'
           const fs = require('node:fs');
@@ -241,7 +241,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
-          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: |
           missing=0
           for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID VITE_API_URL; do
@@ -258,7 +258,7 @@ jobs:
       - name: Build frontend
         run: pnpm --filter @backtest/frontend build
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
       
       - name: Deploy to Cloudflare Pages
         env:
@@ -298,7 +298,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
-          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: |
           missing=0
           for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID VITE_API_URL; do
@@ -315,7 +315,7 @@ jobs:
       - name: Build admin
         run: pnpm --filter @backtest/admin build
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
       
       - name: Deploy to Cloudflare Pages
         env:
