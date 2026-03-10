@@ -40,6 +40,7 @@ This directory contains Pulumi infrastructure-as-code for deploying Quantago to 
    pulumi config set cloudflareAccountId YOUR_ACCOUNT_ID
    pulumi config set zoneName your-domain.com
    pulumi config set frontendOrigin https://app.quantago.co
+   pulumi config set adminOrigin https://admin.quantago.co
    pulumi config set betterAuthUrl https://api.quantago.co
    ```
 

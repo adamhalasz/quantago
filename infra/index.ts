@@ -4,9 +4,12 @@ import * as cloudflare from '@pulumi/cloudflare';
 // Get Pulumi configuration
 const config = new pulumi.Config();
 const cloudflareAccountId = config.require('cloudflareAccountId');
+const zoneName = config.get('zoneName') || 'example.com';
+const frontendOrigin = config.get('frontendOrigin') || `https://app.${zoneName}`;
+const adminOrigin = config.get('adminOrigin') || `https://admin.${zoneName}`;
+const betterAuthUrl = config.get('betterAuthUrl') || `https://api.${zoneName}`;
 
 // Cloudflare zone (domain)
-const zoneName = config.get('zoneName') || 'example.com';
 const zone = cloudflare.getZoneOutput({ name: zoneName });
 
 // ============================================================================
@@ -43,8 +46,9 @@ const backendWorker = new cloudflare.WorkersScript('backend-worker', {
   
   // Secrets will be set via environment variables in CI/CD
   plainTextBindings: [
-    { name: 'FRONTEND_ORIGIN', text: config.get('frontendOrigin') || 'https://app.quantago.co' },
-    { name: 'BETTER_AUTH_URL', text: config.get('betterAuthUrl') || 'https://api.quantago.co' },
+    { name: 'FRONTEND_ORIGIN', text: frontendOrigin },
+    { name: 'ADMIN_ORIGIN', text: adminOrigin },
+    { name: 'BETTER_AUTH_URL', text: betterAuthUrl },
     { name: 'CCXT_EXCHANGE', text: 'binance' },
     { name: 'CLICKHOUSE_DB', text: 'market_data' },
   ],

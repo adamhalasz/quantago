@@ -1,7 +1,8 @@
 config:
   cloudflareAccountId: "" # Set via: pulumi config set cloudflareAccountId YOUR_ACCOUNT_ID
-  zoneName: "example.com" # Set via: pulumi config set zoneName your-domain.com
+  zoneName: "quantago.co" # Set via: pulumi config set zoneName your-domain.com
   frontendOrigin: "https://app.quantago.co"
+  adminOrigin: "https://admin.quantago.co"
   betterAuthUrl: "https://api.quantago.co"
   
   # Secrets (set via: pulumi config set --secret KEY value)

@@ -55,6 +55,12 @@ Set these with `cd services/backend && wrangler secret put SECRET_NAME`:
 - [ ] Update `services/backend/wrangler.jsonc` vars:
   - [ ] BETTER_AUTH_URL (production URL)
   - [ ] FRONTEND_ORIGIN (production URL)
+  - [ ] ADMIN_ORIGIN (production URL)
+- [ ] Update Pulumi production config:
+  - [ ] zoneName=quantago.co
+  - [ ] frontendOrigin=https://app.quantago.co
+  - [ ] adminOrigin=https://admin.quantago.co
+  - [ ] betterAuthUrl=https://api.quantago.co
 - [ ] Verify environment variables are correct
 
 ## Deployment

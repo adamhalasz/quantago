@@ -44,6 +44,7 @@ function App() {
       <div className="min-h-screen bg-background px-6 py-10">
         <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl items-center justify-center">
           <div className="w-full max-w-md rounded-3xl border border-border bg-card px-8 py-12 text-center shadow-sm">
+            <img src="/logo.png" alt="Quantago" className="mx-auto h-16 w-16" />
             <p className="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">Quantago</p>
             <h1 className="mt-4 text-2xl font-semibold text-foreground">Loading your workspace</h1>
             <p className="mt-3 text-sm text-muted-foreground">Restoring your session before rendering the app.</p>
@@ -80,6 +81,10 @@ function App() {
             </div>
           </SheetContent>
         </Sheet>
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="Quantago" className="h-9 w-9 shrink-0" />
+          <span className="text-sm font-semibold uppercase tracking-[0.22em] text-foreground">Quantago</span>
+        </div>
         <div className="flex-1" />
         <Button
           onClick={() => {
@@ -101,8 +106,12 @@ function App() {
       <div className="hidden md:flex">
         {/* Sidebar */}
         <div className="w-72 flex-col border-r bg-background fixed inset-y-0">
-          <div className="flex h-16 items-center border-b px-6">
-            <span className="font-semibold">Quantago</span>
+          <div className="flex h-16 items-center gap-3 border-b px-6">
+            <img src="/logo.png" alt="Quantago" className="h-10 w-10 shrink-0" />
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Quantago</div>
+              <div className="text-sm font-medium text-foreground">Research Workspace</div>
+            </div>
           </div>
           <div className="flex-1 px-4 py-6">
             <MainNav />

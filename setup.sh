@@ -190,7 +190,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "Next steps:"
     echo "  1. Set up custom domains in Cloudflare Dashboard"
     echo "  2. Configure GitHub secrets for CI/CD"
-    echo "  3. Update BETTER_AUTH_URL and FRONTEND_ORIGIN in wrangler.jsonc"
+    echo "  3. Update BETTER_AUTH_URL, FRONTEND_ORIGIN, and ADMIN_ORIGIN in wrangler.jsonc"
 else
     echo ""
     echo -e "${YELLOW}Deployment skipped. To deploy later, run:${NC}"
