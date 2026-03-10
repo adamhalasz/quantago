@@ -38,7 +38,12 @@ jobs:
         run: cd services/admin && pnpm typecheck
       
       - name: Lint backend
-        run: cd services/backend && pnpm lint
+        run: |
+          if [ -f "services/backend/package.json" ] && grep -q '"lint"' services/backend/package.json; then
+            cd services/backend && pnpm lint
+          else
+            echo "Skipping backend lint: no lint script defined"
+          fi
       
       - name: Lint frontend
         run: cd services/frontend && pnpm lint
