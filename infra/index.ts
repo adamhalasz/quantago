@@ -15,7 +15,7 @@ const zone = cloudflare.getZoneOutput({ name: zoneName });
 
 const backendWorker = new cloudflare.WorkersScript('backend-worker', {
   accountId: cloudflareAccountId,
-  name: 'backtest-api',
+  name: 'quantago-api',
   content: 'export default { fetch() { return new Response("Placeholder"); } }',
   module: true,
   compatibilityDate: '2024-01-01',
@@ -43,8 +43,8 @@ const backendWorker = new cloudflare.WorkersScript('backend-worker', {
   
   // Secrets will be set via environment variables in CI/CD
   plainTextBindings: [
-    { name: 'FRONTEND_ORIGIN', text: config.get('frontendOrigin') || 'https://backtest.example.com' },
-    { name: 'BETTER_AUTH_URL', text: config.get('betterAuthUrl') || 'https://api.backtest.example.com' },
+    { name: 'FRONTEND_ORIGIN', text: config.get('frontendOrigin') || 'https://app.quantago.co' },
+    { name: 'BETTER_AUTH_URL', text: config.get('betterAuthUrl') || 'https://api.quantago.co' },
     { name: 'CCXT_EXCHANGE', text: 'binance' },
     { name: 'CLICKHOUSE_DB', text: 'market_data' },
   ],
@@ -74,7 +74,7 @@ const backendDomain = new cloudflare.WorkerDomain('backend-domain', {
 
 const frontendProject = new cloudflare.PagesProject('frontend-project', {
   accountId: cloudflareAccountId,
-  name: 'backtest-frontend',
+  name: 'quantago-app',
   productionBranch: 'main',
   
   buildConfig: {
@@ -98,7 +98,7 @@ const frontendProject = new cloudflare.PagesProject('frontend-project', {
 const frontendDomain = new cloudflare.PagesDomain('frontend-domain', {
   accountId: cloudflareAccountId,
   projectName: frontendProject.name,
-  domain: pulumi.interpolate`backtest.${zoneName}`,
+  domain: pulumi.interpolate`app.${zoneName}`,
 });
 
 // ============================================================================
@@ -107,7 +107,7 @@ const frontendDomain = new cloudflare.PagesDomain('frontend-domain', {
 
 const adminProject = new cloudflare.PagesProject('admin-project', {
   accountId: cloudflareAccountId,
-  name: 'backtest-admin',
+  name: 'quantago-admin',
   productionBranch: 'main',
   
   buildConfig: {
@@ -135,12 +135,34 @@ const adminDomain = new cloudflare.PagesDomain('admin-domain', {
 });
 
 // ============================================================================
+// Landing Worker
+// ============================================================================
+
+const landingWorker = new cloudflare.WorkersScript('landing-worker', {
+  accountId: cloudflareAccountId,
+  name: 'quantago-web',
+  content: 'export default { fetch() { return new Response("Placeholder"); } }',
+  module: true,
+  compatibilityDate: '2024-01-01',
+  compatibilityFlags: ['nodejs_compat'],
+});
+
+const landingDomain = new cloudflare.WorkerDomain('landing-domain', {
+  accountId: cloudflareAccountId,
+  hostname: zoneName,
+  service: landingWorker.name,
+  zoneId: zone.id,
+});
+
+// ============================================================================
 // Exports
 // ============================================================================
 
 export const backendWorkerName = backendWorker.name;
 export const backendUrl = pulumi.interpolate`https://api.${zoneName}`;
 export const frontendProjectName = frontendProject.name;
-export const frontendUrl = pulumi.interpolate`https://backtest.${zoneName}`;
+export const frontendUrl = pulumi.interpolate`https://app.${zoneName}`;
 export const adminProjectName = adminProject.name;
 export const adminUrl = pulumi.interpolate`https://admin.${zoneName}`;
+export const landingWorkerName = landingWorker.name;
+export const landingUrl = pulumi.interpolate`https://${zoneName}`;

@@ -33,6 +33,7 @@ export interface BackendEnv {
   CLICKHOUSE_API_KEY?: string;
   CLICKHOUSE_API_SECRET?: string;
   CLICKHOUSE_DB?: string;
+  STRATEGY_ARTIFACTS?: R2Bucket;
   CCXT_EXCHANGE?: string;
   CCXT_DELAY_MS?: string;
   CCXT_BATCH_COOLDOWN_MS?: string;

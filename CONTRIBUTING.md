@@ -1,6 +1,6 @@
-# Contributing to Backtest Platform
+# Contributing to Quantago
 
-First off, thank you for considering contributing to Backtest Platform! It's people like you that make this project better for everyone.
+First off, thank you for considering contributing to Quantago! It's people like you that make this project better for everyone.
 
 ## Table of Contents
 
@@ -498,4 +498,4 @@ If you have questions about contributing:
 
 ---
 
-Thank you for contributing to Backtest Platform! 🚀
+Thank you for contributing to Quantago! 🚀

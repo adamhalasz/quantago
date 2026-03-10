@@ -1,0 +1,13 @@
+{
+  "slug": "price-action-strategy",
+  "name": "Price Action Strategy",
+  "description": "Looks for pin-bar reversal candles and reacts to direct price rejection patterns.",
+  "version": "1.0.0",
+  "defaultFrequency": "daily",
+  "minCandles": 3,
+  "lookbackCandles": 3,
+  "defaultConfig": {
+    "takeProfitLevel": 1.6,
+    "stopLossLevel": 0.8
+  }
+}

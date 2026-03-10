@@ -1,0 +1,14 @@
+{
+  "slug": "momentum-strategy",
+  "name": "Momentum Strategy",
+  "description": "Combines RSI and MACD momentum confirmation to enter when trend strength begins to accelerate.",
+  "version": "1.0.0",
+  "defaultFrequency": "scalping",
+  "minCandles": 26,
+  "lookbackCandles": 26,
+  "defaultConfig": {
+    "takeProfitLevel": 1,
+    "stopLossLevel": 0.4,
+    "timeframe": "5m"
+  }
+}

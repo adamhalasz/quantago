@@ -1,0 +1,13 @@
+{
+  "slug": "breakout-strategy",
+  "name": "Breakout Strategy",
+  "description": "Enters when price escapes a recent consolidation range with enough follow-through to matter.",
+  "version": "1.0.0",
+  "defaultFrequency": "daily",
+  "minCandles": 20,
+  "lookbackCandles": 20,
+  "defaultConfig": {
+    "takeProfitLevel": 2,
+    "stopLossLevel": 1
+  }
+}

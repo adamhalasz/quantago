@@ -8,15 +8,16 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { ASSET_CLASSES, CRYPTO_SYMBOLS, CURRENCIES, MARKET_DATA_PROVIDERS, STOCK_SYMBOLS, TIMEFRAMES } from '@/lib/constants';
-import { STRATEGIES, STRATEGY_ICONS, STRATEGY_TIMEFRAMES } from '@/lib/strategies';
+import { FALLBACK_STRATEGY_CATALOG, STRATEGY_ICON_MAP } from '@/lib/strategy-catalog';
 import { ArrowLeft, AlertTriangle, Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HistoryProvider } from '@/lib/history/HistoryProvider';
 import { EntryFrequency } from '@/lib/types';
 import { queueBacktestRun, waitForBacktestCompletion } from '@/lib/api-client';
 import { buildStoredSymbol, estimateTradingDays, getAvailableExchanges, getDefaultExchangeForAssetClass, getDefaultProviderForAssetClass, getDefaultSymbolForAssetClass, type MarketAssetClass, type MarketDataProviderId } from '@/lib/market';
+import { useStrategiesCatalog } from '@/routes/strategies/strategies-hooks';
 
-type StrategyIcon = (typeof STRATEGY_ICONS)[keyof typeof STRATEGY_ICONS];
+type StrategyIcon = (typeof STRATEGY_ICON_MAP)[keyof typeof STRATEGY_ICON_MAP];
 type CreateBacktestFormData = {
   dataSource: 'live' | 'synthetic';
   assetClass: MarketAssetClass;
@@ -48,6 +49,7 @@ type CreateBacktestFormData = {
 
 export function CreateBacktestPage() {
   const [, navigate] = useLocation();
+  const { data: strategyCatalog, run: runStrategiesCatalog } = useStrategiesCatalog();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [estimatedTime, setEstimatedTime] = React.useState<string | null>(null);
@@ -66,6 +68,11 @@ export function CreateBacktestPage() {
     message: null
   });
   const startTimeRef = React.useRef<number | null>(null);
+  const STRATEGIES = strategyCatalog.length > 0 ? strategyCatalog : FALLBACK_STRATEGY_CATALOG;
+  const STRATEGY_TIMEFRAMES = React.useMemo(() => {
+    return Object.fromEntries(STRATEGIES.map((strategy) => [strategy.name, strategy.recommendedTimeframe]));
+  }, [STRATEGIES]);
+  const STRATEGY_ICONS = STRATEGY_ICON_MAP;
   const strategyTimeframes = STRATEGY_TIMEFRAMES as Record<string, string>;
   const strategyIcons = STRATEGY_ICONS as Record<string, StrategyIcon>;
   const defaultStartDate = new Date(new Date().getFullYear() - 1, 0, 1).toISOString().split('T')[0];
@@ -106,6 +113,10 @@ export function CreateBacktestPage() {
 
   const [dataInfo, setDataInfo] = React.useState<{ size: number; points: number; time: number } | null>(null);
   const availableExchanges = React.useMemo(() => getAvailableExchanges(formData.assetClass), [formData.assetClass]);
+
+  React.useEffect(() => {
+    void runStrategiesCatalog();
+  }, [runStrategiesCatalog]);
 
   // Calculate data info whenever relevant form fields change
   React.useEffect(() => {
@@ -158,6 +169,7 @@ export function CreateBacktestPage() {
       time: processingTimeMinutes
     });
   }, [
+    STRATEGIES,
     formData.timeframe,
     formData.startDate,
     formData.endDate,
@@ -220,7 +232,7 @@ export function CreateBacktestPage() {
       isValid,
       message
     });
-  }, [formData.startDate, formData.endDate, formData.strategy, formData.assetClass]);
+  }, [STRATEGIES, formData.startDate, formData.endDate, formData.strategy, formData.assetClass]);
 
   const handleStrategyChange = (value: string) => {
     const strategy = STRATEGIES.find(s => s.name === value);

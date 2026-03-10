@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This document describes how to deploy the backtest platform to production using GitHub Actions and Cloudflare.
+This document describes how to deploy Quantago to production using GitHub Actions and Cloudflare.
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ Configure the following secrets in your GitHub repository (Settings → Secrets 
 | `CLICKHOUSE_URL` | ClickHouse HTTP endpoint | `https://your-clickhouse.cloud:8443` |
 | `CLICKHOUSE_USERNAME` | ClickHouse username | `default` |
 | `CLICKHOUSE_PASSWORD` | ClickHouse password | `your-password` |
-| `VITE_API_URL` | Production API URL for frontend | `https://api.backtest.yourdomain.com` |
+| `VITE_API_URL` | Production API URL for frontend | `https://api.quantago.co` |
 
 ### Required Backend Runtime Configuration
 
@@ -34,9 +34,9 @@ The backend must trust the deployed frontend and admin origins. Set these values
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `BETTER_AUTH_URL` | Public backend auth/API origin | `https://api.backtest.yourdomain.com` |
-| `FRONTEND_ORIGIN` | Main frontend origin | `https://backtest.yourdomain.com` |
-| `ADMIN_ORIGIN` | Admin frontend origin | `https://admin.yourdomain.com` |
+| `BETTER_AUTH_URL` | Public backend auth/API origin | `https://api.quantago.co` |
+| `FRONTEND_ORIGIN` | Main frontend origin | `https://app.quantago.co` |
+| `ADMIN_ORIGIN` | Admin frontend origin | `https://admin.quantago.co` |
 
 The GitHub deploy workflow validates these values before deploying and injects them into the backend Worker at deploy time.
 It also requires `VITE_API_URL` for frontend and admin builds so Pages deployments cannot fall back to localhost or same-origin auth paths.
@@ -76,6 +76,7 @@ The platform uses GitHub Actions for CI/CD. On every push to `main`:
 2. **Deploy Backend** - Cloudflare Workers deployment
 3. **Deploy Frontend** - Cloudflare Pages deployment
 4. **Deploy Admin** - Cloudflare Pages deployment
+5. **Deploy Landing** - Cloudflare Worker deployment for `quantago.co`
 
 ### Manual Deployment Trigger
 
@@ -127,12 +128,12 @@ Before the first deployment, you need to create Pages projects:
 # Create frontend project
 cd services/frontend
 pnpm build
-npx wrangler pages project create backtest-frontend
+npx wrangler pages project create quantago-app
 
 # Create admin project
 cd ../admin
 pnpm build
-npx wrangler pages project create backtest-admin
+npx wrangler pages project create quantago-admin
 ```
 
 ### Option 2: Via Cloudflare Dashboard
@@ -140,8 +141,8 @@ npx wrangler pages project create backtest-admin
 1. Go to https://dash.cloudflare.com
 2. Select "Workers & Pages"
 3. Create two new Pages projects:
-   - `backtest-frontend`
-   - `backtest-admin`
+   - `quantago-app`
+   - `quantago-admin`
 
 ## Custom Domains (Optional)
 
@@ -151,9 +152,10 @@ Add these DNS records in Cloudflare:
 
 | Type | Name | Target | Proxy Status |
 |------|------|--------|--------------|
-| CNAME | `api` | `backtest-api.workers.dev` | Proxied |
-| CNAME | `backtest` | `backtest-frontend.pages.dev` | Proxied |
-| CNAME | `admin` | `backtest-admin.pages.dev` | Proxied |
+| CNAME | `api` | `quantago-api.workers.dev` | Proxied |
+| CNAME | `app` | `quantago-app.pages.dev` | Proxied |
+| CNAME | `admin` | `quantago-admin.pages.dev` | Proxied |
+| CNAME | `@` | `quantago-web.workers.dev` | Proxied |
 
 ### Configure Custom Domains
 
@@ -161,18 +163,26 @@ Add these DNS records in Cloudflare:
 ```bash
 cd services/backend
 npx wrangler deploy
-npx wrangler domains add api.yourdomain.com
+npx wrangler domains add api.quantago.co
 ```
 
 #### Frontend Pages
-1. Go to Cloudflare Dashboard → Pages → backtest-frontend
+1. Go to Cloudflare Dashboard → Pages → quantago-app
 2. Click "Custom domains"
-3. Add `backtest.yourdomain.com`
+3. Add `app.quantago.co`
 
 #### Admin Pages
-1. Go to Cloudflare Dashboard → Pages → backtest-admin
+1. Go to Cloudflare Dashboard → Pages → quantago-admin
 2. Click "Custom domains"
-3. Add `admin.yourdomain.com`
+3. Add `admin.quantago.co`
+
+#### Landing Worker
+```bash
+cd services/landing
+npx wrangler deploy
+```
+
+Then attach the Worker to `quantago.co` as the apex landing domain.
 
 ## Environment Variables
 
@@ -184,9 +194,9 @@ Set production environment variables:
 cd services/backend
 
 # Update vars (non-secret) in wrangler.jsonc or your production deploy config:
-# BETTER_AUTH_URL=https://api.yourdomain.com
-# FRONTEND_ORIGIN=https://backtest.yourdomain.com
-# ADMIN_ORIGIN=https://admin.yourdomain.com
+# BETTER_AUTH_URL=https://api.quantago.co
+# FRONTEND_ORIGIN=https://app.quantago.co
+# ADMIN_ORIGIN=https://admin.quantago.co
 
 # Set secrets
 npx wrangler secret put DATABASE_URL
@@ -281,10 +291,13 @@ After deployment, verify services are running:
 curl https://api.yourdomain.com/api/health
 
 # Frontend
-curl https://backtest.yourdomain.com
+curl https://app.quantago.co
 
 # Admin
-curl https://admin.yourdomain.com
+curl https://admin.quantago.co
+
+# Landing
+curl https://quantago.co
 ```
 
 ## Rollback

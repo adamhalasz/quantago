@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { FALLBACK_STRATEGY_CATALOG } from '@/lib/strategy-catalog';
 import { useAppStore } from '@/store';
 import { StrategiesPage } from './StrategiesPage';
 
@@ -12,6 +13,7 @@ describe('StrategiesPage', () => {
     useAppStore.setState({
       loading: {},
       errors: {},
+      strategiesCatalog: FALLBACK_STRATEGY_CATALOG,
       strategyStats: {
         'Momentum Strategy': {
           totalBacktests: 6,
@@ -22,6 +24,7 @@ describe('StrategiesPage', () => {
           worstTrade: -2.1,
         },
       },
+      fetchStrategiesCatalog: vi.fn().mockResolvedValue(undefined),
       fetchStrategyStats: vi.fn().mockResolvedValue(undefined),
     });
   });

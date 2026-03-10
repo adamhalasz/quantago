@@ -1,0 +1,13 @@
+{
+  "slug": "dual-moving-average-strategy",
+  "name": "Dual Moving Average Strategy",
+  "description": "Uses short and long moving-average crossovers to identify directional regime changes.",
+  "version": "1.0.0",
+  "defaultFrequency": "daily",
+  "minCandles": 50,
+  "lookbackCandles": 50,
+  "defaultConfig": {
+    "takeProfitLevel": 1.5,
+    "stopLossLevel": 0.7
+  }
+}

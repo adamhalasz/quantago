@@ -1,0 +1,13 @@
+{
+  "slug": "scalping-strategy",
+  "name": "Scalping Strategy",
+  "description": "Uses short-term momentum and moving-average alignment for rapid intraday entries.",
+  "version": "1.0.0",
+  "defaultFrequency": "scalping",
+  "minCandles": 10,
+  "lookbackCandles": 10,
+  "defaultConfig": {
+    "takeProfitLevel": 0.3,
+    "stopLossLevel": 0.2
+  }
+}

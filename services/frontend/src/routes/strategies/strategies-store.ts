@@ -1,4 +1,4 @@
-import { STRATEGIES } from '@/lib/strategies';
+import { FALLBACK_STRATEGY_CATALOG, type StrategyCatalogItem } from '@/lib/strategy-catalog';
 import type { StoredBacktest } from '@/lib/types';
 import { withLoading } from '@/store/asyncWrapper';
 import * as api from './strategies-api';
@@ -12,8 +12,8 @@ export type StrategyStats = {
   worstTrade: number;
 };
 
-const calculateStats = (backtests: StoredBacktest[]) => {
-  return STRATEGIES.reduce<Record<string, StrategyStats>>((accumulator, strategy) => {
+const calculateStats = (backtests: StoredBacktest[], strategies: StrategyCatalogItem[]) => {
+  return strategies.reduce<Record<string, StrategyStats>>((accumulator, strategy) => {
     const strategyBacktests = backtests.filter((backtest) => backtest.strategy === strategy.name);
 
     if (strategyBacktests.length === 0) {
@@ -52,14 +52,28 @@ const calculateStats = (backtests: StoredBacktest[]) => {
 };
 
 export const strategiesSlice = (set: any, get: any) => ({
+  strategiesCatalog: [] as StrategyCatalogItem[],
   strategyStats: {} as Record<string, StrategyStats>,
+
+  fetchStrategiesCatalog: async () => {
+    return withLoading(
+      'fetchStrategiesCatalog',
+      async (_set, _get, setKey) => {
+        const strategies = await api.fetchStrategiesCatalog();
+        setKey('strategiesCatalog', strategies);
+      },
+      set,
+      get,
+    );
+  },
 
   fetchStrategyStats: async () => {
     return withLoading(
       'fetchStrategyStats',
       async (_set, _get, setKey) => {
         const backtests = await api.fetchStrategyBacktests();
-        setKey('strategyStats', calculateStats(backtests));
+        const strategies = _get().strategiesCatalog.length > 0 ? _get().strategiesCatalog : FALLBACK_STRATEGY_CATALOG;
+        setKey('strategyStats', calculateStats(backtests, strategies));
       },
       set,
       get,

@@ -1,4 +1,5 @@
 import type { MarketAssetClass, MarketDataProviderId } from '@/lib/market';
+import { normalizeStrategyCatalogItem, type StrategyCatalogItem, type StrategyCatalogRecord } from '@/lib/strategy-catalog';
 import type { Bot, StoredBacktest, Trade } from '@/lib/types';
 
 const configuredBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
@@ -104,6 +105,11 @@ const normalizeBot = (bot: Record<string, unknown>): Bot => ({
 export async function listBacktests(): Promise<StoredBacktest[]> {
   const data = await apiRequest<Record<string, unknown>[]>('/api/backtests');
   return data.map(normalizeBacktest);
+}
+
+export async function listStrategies(): Promise<StrategyCatalogItem[]> {
+  const data = await apiRequest<StrategyCatalogRecord[]>('/api/strategies');
+  return data.map(normalizeStrategyCatalogItem);
 }
 
 export async function getBacktest(id: string): Promise<StoredBacktest> {

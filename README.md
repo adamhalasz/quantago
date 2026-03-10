@@ -1,10 +1,10 @@
 <div align="center">
 
-# 📈 Backtest Platform
+# 📈 Quantago
 
 **A serverless, cloud-native backtesting platform for algorithmic trading strategies**
 
-Built on Cloudflare's edge infrastructure for lightning-fast execution and global scalability
+Built on Cloudflare's edge infrastructure for lightning-fast execution and global scalability across Quantago's web, app, admin, and API surfaces.
 
 [Features](#-features) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
@@ -12,11 +12,11 @@ Built on Cloudflare's edge infrastructure for lightning-fast execution and globa
 
 ---
 
-## 🎯 What is Backtest Platform?
+## 🎯 What is Quantago?
 
-Backtest Platform is a modern, open-source backtesting engine designed to help traders and quantitative analysts test algorithmic trading strategies against historical market data. Built with performance and scalability in mind, it leverages Cloudflare Workers for edge computing and ClickHouse for time-series data storage.
+Quantago is a modern, open-source backtesting engine designed to help traders and quantitative analysts test algorithmic trading strategies against historical market data. Built with performance and scalability in mind, it leverages Cloudflare Workers for edge computing and ClickHouse for time-series data storage.
 
-Whether you're a quantitative trader developing sophisticated strategies or a developer building trading infrastructure, Backtest Platform provides the tools you need to validate your ideas before risking real capital.
+Whether you're a quantitative trader developing sophisticated strategies or a developer building trading infrastructure, Quantago provides the tools you need to validate your ideas before risking real capital.
 
 ## ✨ Features
 
@@ -42,7 +42,13 @@ Whether you're a quantitative trader developing sophisticated strategies or a de
 - **Mean Reversion**: Bollinger Bands, Grid Trading
 - **Momentum**: RSI Divergence, Breakout Strategy
 - **Scalping**: High-frequency profit targeting
-- **Custom Strategies**: Extensible strategy interface
+- **Custom Strategies**: Native TypeScript, remote HTTP, and WASM strategy runtimes
+
+### 🛠 **Strategy Platform**
+- Root-level strategy registry with versioned manifests and executable strategy modules
+- Schema-driven strategy parameters for consistent UI and API validation
+- Python SDK and CLI for shipping strategies without rewriting the platform
+- Persisted strategy definitions and version history in Postgres with optional R2 artifacts
 
 ### 🔐 **Enterprise-Grade Security**
 - Role-based access control (User/Admin)
@@ -69,7 +75,9 @@ Whether you're a quantitative trader developing sophisticated strategies or a de
 | **💰 No Infrastructure Costs** | Generous free tier on Cloudflare, Neon, and ClickHouse |
 | **📈 Test Before You Invest** | Validate strategies with historical data before risking capital |
 | **⚡ Fast Iteration** | Develop and test strategies in seconds, not hours |
-| **🔧 Fully Customizable** | Open source, extensible architecture—build what you need |
+| **🧩 Bring Your Own Runtime** | Run strategies as native TypeScript, deploy them over HTTP from Python, or package them as WASM |
+| **🐍 Python-Friendly** | Build and serve strategies with the included Python SDK and CLI instead of porting logic into the backend |
+| **🔧 Fully Customizable** | Open source, extensible architecture with manifest-driven strategies and a persisted registry |
 | **🌐 Production-Ready** | Built for scale with enterprise-grade infrastructure |
 | **📊 Data-Driven Decisions** | Comprehensive metrics and visualizations for strategy analysis |
 
@@ -86,7 +94,7 @@ Whether you're a quantitative trader developing sophisticated strategies or a de
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/backtest.git
+   git clone https://github.com/adamhalasz/backtest.git
    cd backtest
    ```
 
@@ -114,6 +122,7 @@ Whether you're a quantitative trader developing sophisticated strategies or a de
    psql $DATABASE_URL -f src/db/migrations/0003_backtest_workflows.sql
    psql $DATABASE_URL -f src/db/migrations/0004_ingestion_metadata.sql
    psql $DATABASE_URL -f src/db/migrations/0005_add_user_roles.sql
+   psql $DATABASE_URL -f src/db/migrations/0006_strategy_registry.sql
    ```
 
 5. **Start development servers**
@@ -129,6 +138,10 @@ Whether you're a quantitative trader developing sophisticated strategies or a de
    # Terminal 3 - Admin (optional)
    cd services/admin
    pnpm dev  # http://localhost:5174
+
+   # Terminal 4 - Landing (optional)
+   cd services/landing
+   pnpm dev  # http://localhost:8786
    ```
 
 6. **Create your first admin user**
@@ -141,6 +154,13 @@ Whether you're a quantitative trader developing sophisticated strategies or a de
    - Sign up for an account
    - Navigate to the Backtest page
    - Configure your strategy and run your first backtest
+
+### Production Domains
+
+- Landing: https://quantago.co
+- App: https://app.quantago.co
+- Admin: https://admin.quantago.co
+- API: https://api.quantago.co
 
 ### Verify Installation
 
@@ -157,7 +177,7 @@ pnpm build
 
 ## 🏗 Architecture
 
-Backtest Platform is built as a serverless, edge-first application:
+Quantago is built as a serverless, edge-first application:
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -165,6 +185,7 @@ Backtest Platform is built as a serverless, edge-first application:
 ├─────────────────────────────────────────────────┤
 │  Frontend (Pages)  │  Admin (Pages)  │  API     │
 │  React + Vite      │  React + Vite   │  Workers │
+│  Landing (SSR)     │                 │          │
 └──────────┬─────────┴─────────┬───────┴────┬─────┘
            │                   │            │
            └───────────────────┴────────────┤
@@ -197,12 +218,22 @@ For detailed architecture documentation, see [docs/ARCHITECTURE.md](docs/ARCHITE
 | Document | Description |
 |----------|-------------|
 | [Architecture](docs/ARCHITECTURE.md) | Comprehensive architecture overview with diagrams |
+| [Strategy Protocol](docs/STRATEGY_PROTOCOL.md) | Runtime-agnostic strategy contract for native, remote, and future WASM strategies |
 | [Deployment Guide](docs/DEPLOYMENT.md) | Step-by-step production deployment |
 | [Quick Start](docs/QUICKSTART.md) | Fast-track deployment guide |
 | [Secrets Reference](docs/SECRETS.md) | GitHub Actions secrets configuration |
 | [Backend Standards](docs/standards/backend-standards.md) | Backend coding conventions |
 | [Component Standards](docs/standards/component-standards.md) | Frontend component patterns |
 | [Zustand Standards](docs/standards/zustand-standards.md) | State management patterns |
+
+## SDKs
+
+- [Python SDK](sdks/python/README.md): local strategy server and CLI for remote Python strategies
+
+## Strategies
+
+- Built-in strategies live in `strategies/<strategy-name>/` with a `manifest.json` and `index.ts`
+- The backend strategy catalog loads built-ins from this root directory, then merges persisted remote and WASM definitions from the registry
 
 ## 🗂 Project Structure
 
@@ -211,7 +242,8 @@ backtest/
 ├── services/
 │   ├── backend/          # Cloudflare Workers API
 │   ├── frontend/         # React frontend application
-│   └── admin/            # Admin dashboard
+│   ├── admin/            # Admin dashboard
+│   └── landing/          # SSR landing site for quantago.co
 ├── infra/                # Pulumi infrastructure code
 ├── shared/               # Shared types and utilities
 ├── docs/                 # Documentation

@@ -1,6 +1,6 @@
-# Backtest Infrastructure
+# Quantago Infrastructure
 
-This directory contains Pulumi infrastructure-as-code for deploying the backtest platform to Cloudflare.
+This directory contains Pulumi infrastructure-as-code for deploying Quantago to Cloudflare, including `quantago.co`, `app.quantago.co`, `admin.quantago.co`, and `api.quantago.co`.
 
 ## Prerequisites
 
@@ -39,8 +39,8 @@ This directory contains Pulumi infrastructure-as-code for deploying the backtest
    ```bash
    pulumi config set cloudflareAccountId YOUR_ACCOUNT_ID
    pulumi config set zoneName your-domain.com
-   pulumi config set frontendOrigin https://backtest.your-domain.com
-   pulumi config set betterAuthUrl https://api.backtest.your-domain.com
+   pulumi config set frontendOrigin https://app.quantago.co
+   pulumi config set betterAuthUrl https://api.quantago.co
    ```
 
 6. **Set secrets**:
@@ -73,22 +73,27 @@ pulumi destroy
 ## Resources Created
 
 ### Backend Worker
-- **Name**: `backtest-api`
-- **Domain**: `api.your-domain.com`
+- **Name**: `quantago-api`
+- **Domain**: `api.quantago.co`
 - **Features**:
   - Cloudflare Workflows for async job processing
   - Environment variables and secrets
   - Custom domain routing
 
 ### Frontend Pages
-- **Name**: `backtest-frontend`
-- **Domain**: `backtest.your-domain.com`
+- **Name**: `quantago-app`
+- **Domain**: `app.quantago.co`
 - **Build**: Vite build from `services/frontend`
 
 ### Admin Pages
-- **Name**: `backtest-admin`
-- **Domain**: `admin.your-domain.com`
+- **Name**: `quantago-admin`
+- **Domain**: `admin.quantago.co`
 - **Build**: Vite build from `services/admin`
+
+### Landing Worker
+- **Name**: `quantago-web`
+- **Domain**: `quantago.co`
+- **Build**: SSR Worker from `services/landing`
 
 ## CI/CD Integration
 
@@ -116,14 +121,20 @@ wrangler deploy
 ```bash
 cd services/frontend
 pnpm build
-wrangler pages deploy dist --project-name backtest-frontend
+wrangler pages deploy dist --project-name quantago-app
 ```
 
 ### Admin Pages
 ```bash
 cd services/admin
 pnpm build
-wrangler pages deploy dist --project-name backtest-admin
+wrangler pages deploy dist --project-name quantago-admin
+```
+
+### Landing Worker
+```bash
+cd services/landing
+wrangler deploy
 ```
 
 ## Troubleshooting

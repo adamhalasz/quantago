@@ -111,16 +111,16 @@ echo ""
 echo "Creating Pages projects if they don't exist..."
 echo ""
 
-if ! npx wrangler pages project list 2>/dev/null | grep -q "backtest-frontend"; then
+if ! npx wrangler pages project list 2>/dev/null | grep -q "quantago-app"; then
     echo "Creating frontend project..."
-    npx wrangler pages project create backtest-frontend --production-branch main || true
+    npx wrangler pages project create quantago-app --production-branch main || true
 else
     echo -e "${GREEN}✓ Frontend project exists${NC}"
 fi
 
-if ! npx wrangler pages project list 2>/dev/null | grep -q "backtest-admin"; then
+if ! npx wrangler pages project list 2>/dev/null | grep -q "quantago-admin"; then
     echo "Creating admin project..."
-    npx wrangler pages project create backtest-admin --production-branch main || true
+    npx wrangler pages project create quantago-admin --production-branch main || true
 else
     echo -e "${GREEN}✓ Admin project exists${NC}"
 fi
@@ -182,9 +182,10 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${GREEN}✨ Deployment complete!${NC}"
     echo ""
     echo "Your services are now live:"
-    echo "  🔧 Backend: https://backtest-api.workers.dev"
-    echo "  🌐 Frontend: https://backtest-frontend.pages.dev"
-    echo "  👑 Admin: https://backtest-admin.pages.dev"
+    echo "  🔧 Backend: https://quantago-api.workers.dev"
+    echo "  🌐 Frontend: https://quantago-app.pages.dev"
+    echo "  👑 Admin: https://quantago-admin.pages.dev"
+    echo "  🏠 Landing: https://quantago-web.workers.dev"
     echo ""
     echo "Next steps:"
     echo "  1. Set up custom domains in Cloudflare Dashboard"

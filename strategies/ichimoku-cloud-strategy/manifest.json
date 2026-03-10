@@ -1,0 +1,13 @@
+{
+  "slug": "ichimoku-cloud-strategy",
+  "name": "Ichimoku Cloud Strategy",
+  "description": "Trades Tenkan and Kijun crossover events from the Ichimoku trend framework.",
+  "version": "1.0.0",
+  "defaultFrequency": "daily",
+  "minCandles": 26,
+  "lookbackCandles": 26,
+  "defaultConfig": {
+    "takeProfitLevel": 1.8,
+    "stopLossLevel": 0.9
+  }
+}

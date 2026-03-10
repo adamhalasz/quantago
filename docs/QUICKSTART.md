@@ -25,8 +25,8 @@ npx wrangler login
 
 #### 2. Create Pages Projects
 ```bash
-npx wrangler pages project create backtest-frontend
-npx wrangler pages project create backtest-admin
+npx wrangler pages project create quantago-app
+npx wrangler pages project create quantago-admin
 ```
 
 #### 3. Run Database Migrations
@@ -62,6 +62,7 @@ This will execute deployment scripts located in `scripts/` directory:
 - `deploy-backend.sh` - Deploys the Worker API
 - `deploy-frontend.sh` - Builds and deploys the frontend to Pages
 - `deploy-admin.sh` - Builds and deploys the admin dashboard to Pages
+- `deploy-landing.sh` - Deploys the SSR landing site to the apex domain
 
 ### Option 3: GitHub Actions
 
@@ -74,15 +75,19 @@ This will execute deployment scripts located in `scripts/` directory:
 ### Backend Worker
 - **API endpoints**: All backend routes
 - **Workflows**: Async job processing
-- **URL**: `backtest-api.workers.dev`
+- **URL**: `quantago-api.workers.dev`
 
 ### Frontend Pages
 - **Main app**: User interface
-- **URL**: `backtest-frontend.pages.dev`
+- **URL**: `quantago-app.pages.dev`
 
 ### Admin Pages
 - **Admin dashboard**: Ingestion management
-- **URL**: `backtest-admin.pages.dev`
+- **URL**: `quantago-admin.pages.dev`
+
+### Landing Worker
+- **Marketing site**: Quantago landing page and legal links
+- **URL**: `quantago-web.workers.dev`
 
 ## Required Secrets
 
@@ -107,8 +112,9 @@ Set in Cloudflare:
 
 After deployment, add custom domains in Cloudflare Dashboard:
 - `api.yourdomain.com` → Backend Worker
-- `backtest.yourdomain.com` → Frontend Pages
-- `admin.yourdomain.com` → Admin Pages
+- `app.quantago.co` → Frontend Pages
+- `admin.quantago.co` → Admin Pages
+- `quantago.co` → Landing Worker
 
 ## ClickHouse Setup
 
@@ -166,6 +172,7 @@ pnpm run deploy:all
 pnpm deploy:backend
 pnpm deploy:frontend
 pnpm deploy:admin
+pnpm deploy:landing
 ```
 
 ## Verification
@@ -175,4 +182,4 @@ Before deploying, verify:
 - Database migrations have been applied
 - The `market_data` ClickHouse database exists
 - `npx wrangler whoami` succeeds
-- The `backtest-frontend` and `backtest-admin` Pages projects exist
+- The `quantago-app` and `quantago-admin` Pages projects exist

@@ -16,6 +16,7 @@ import { marketDataRouter } from './routes/market-data/market-data-router';
 import { SymbolBackfillWorkflow } from './routes/ingestion/symbol-backfill-workflow';
 import { sessionRouter } from './routes/session/session-router';
 import { adminRouter } from './routes/admin/admin-router';
+import { strategiesRouter } from './routes/strategies/strategies-router';
 import type { AppEnv } from './worker-types';
 
 const app = new Hono<AppEnv>();
@@ -31,6 +32,7 @@ app.route('/api/health', healthRouter);
 app.route('/api/session', sessionRouter);
 app.route('/api/market-data', marketDataRouter);
 app.route('/api/backtests', backtestsRouter);
+app.route('/api/strategies', strategiesRouter);
 app.route('/api/bots', botsRouter);
 app.route('/api/admin', adminRouter);
 app.route('/api/admin/ingestion', ingestionRouter);

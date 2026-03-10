@@ -1,6 +1,6 @@
 # Architecture
 
-This document provides a comprehensive overview of the backtest platform architecture, including system design, data flows, and infrastructure components.
+This document provides a comprehensive overview of the Quantago architecture, including system design, data flows, and infrastructure components.
 
 ## Table of Contents
 
@@ -11,11 +11,12 @@ This document provides a comprehensive overview of the backtest platform archite
 - [Authentication & Authorization](#authentication--authorization)
 - [Ingestion Pipeline](#ingestion-pipeline)
 - [Backtest Execution](#backtest-execution)
+- [Strategy Protocol](#strategy-protocol)
 - [Infrastructure & Deployment](#infrastructure--deployment)
 
 ## System Overview
 
-The backtest platform is a cloud-native, serverless application designed for algorithmic trading strategy backtesting and market data management. Built on Cloudflare's edge infrastructure, it provides:
+Quantago is a cloud-native, serverless application designed for algorithmic trading strategy backtesting and market data management. Built on Cloudflare's edge infrastructure, it provides:
 
 - **Fast backtesting execution** using Cloudflare Workers
 - **Scalable data storage** with ClickHouse for OHLCV data
@@ -430,24 +431,35 @@ graph TB
 
 ### Strategy Interface
 
-```typescript
-interface Strategy {
-  name: string;
-  description: string;
-  parameters: StrategyParameters;
-  
-  initialize(params: StrategyParameters): void;
-  onCandle(candle: OHLCV, position: Position): Signal | null;
-  onTrade(trade: Trade): void;
-}
+Strategies no longer need to be coupled to the platform runtime. The platform evaluates a language-agnostic Strategy Protocol and dispatches to one of three runtimes:
 
-interface Signal {
-  type: 'buy' | 'sell';
-  price: number;
-  quantity: number;
-  reason?: string;
-}
+- `native`: in-process TypeScript strategy execution
+- `remote`: HTTP call to an external strategy service
+- `wasm`: reserved for future high-performance strategy execution
+
+See [docs/STRATEGY_PROTOCOL.md](docs/STRATEGY_PROTOCOL.md) for the full request and response contract.
+
+## Strategy Protocol
+
+```mermaid
+graph LR
+        C[Candle + History] --> R[Strategy Runner]
+        P[Portfolio State] --> R
+        M[Strategy Metadata] --> R
+        R --> N[Native TypeScript]
+        R --> H[Remote HTTP]
+        R --> W[WASM Future Tier]
+        N --> S[Normalized Signal]
+        H --> S
+        W --> S
 ```
+
+The Strategy Runner normalizes every runtime behind the same protocol:
+
+- Input: candle, bounded history window, portfolio snapshot, parameters, execution context
+- Output: `BUY`, `SELL`, or `HOLD` plus optional `size`, `reason`, and diagnostic metadata
+
+This keeps execution, P&L, storage, and charting inside the platform while making strategy implementations portable across languages.
 
 ### Supported Strategies
 
@@ -470,13 +482,14 @@ interface Signal {
 graph TB
     subgraph "Cloudflare Edge"
         subgraph "Workers"
-            API[Backend Worker<br/>backtest-api]
+            API[Backend Worker<br/>quantago-api]
             WF_ENGINE[Workflows Engine]
+            LANDING[Landing Worker<br/>quantago-web]
         end
         
         subgraph "Pages"
-            FRONTEND[Frontend Pages<br/>backtest-frontend]
-            ADMIN_PAGES[Admin Pages<br/>backtest-admin]
+            FRONTEND[Frontend Pages<br/>quantago-app]
+            ADMIN_PAGES[Admin Pages<br/>quantago-admin]
         end
         
         subgraph "Bindings"
@@ -494,6 +507,7 @@ graph TB
 
     FRONTEND -->|HTTPS| API
     ADMIN_PAGES -->|HTTPS| API
+    LANDING -->|HTTPS| FRONTEND
     API --> WF_BACKTEST
     API --> WF_BULK
     API --> WF_SYNC
@@ -515,12 +529,14 @@ graph LR
         DEPLOY_BE[Deploy Backend]
         DEPLOY_FE[Deploy Frontend]
         DEPLOY_ADMIN[Deploy Admin]
+        DEPLOY_WEB[Deploy Landing]
     end
 
     subgraph "Cloudflare"
         WORKER[Worker Deployed]
         PAGES_FE[Frontend Live]
         PAGES_ADMIN[Admin Live]
+        WEB[Landing Live]
     end
 
     TRIGGER --> TEST
@@ -528,9 +544,11 @@ graph LR
     BUILD --> DEPLOY_BE
     BUILD --> DEPLOY_FE
     BUILD --> DEPLOY_ADMIN
+    BUILD --> DEPLOY_WEB
     DEPLOY_BE --> WORKER
     DEPLOY_FE --> PAGES_FE
     DEPLOY_ADMIN --> PAGES_ADMIN
+    DEPLOY_WEB --> WEB
 ```
 
 ### Infrastructure as Code
@@ -539,9 +557,9 @@ The platform uses Pulumi for infrastructure management:
 
 ```typescript
 // Backend Worker with Workflow bindings
-const backendWorker = new cloudflare.WorkerScript("backtest-api", {
+const backendWorker = new cloudflare.WorkerScript("quantago-api", {
   content: workerCode,
-  name: "backtest-api",
+    name: "quantago-api",
   compatibilityDate: "2024-01-01",
   workflows: [
     { name: "backtest-workflow", binding: "BACKTEST_WORKFLOW" },
@@ -552,16 +570,16 @@ const backendWorker = new cloudflare.WorkerScript("backtest-api", {
 });
 
 // Frontend Pages Project
-const frontendPages = new cloudflare.PagesProject("backtest-frontend", {
+const frontendPages = new cloudflare.PagesProject("quantago-app", {
   accountId: cloudflareAccountId,
-  name: "backtest-frontend",
+    name: "quantago-app",
   productionBranch: "main",
 });
 
 // Admin Pages Project
-const adminPages = new cloudflare.PagesProject("backtest-admin", {
+const adminPages = new cloudflare.PagesProject("quantago-admin", {
   accountId: cloudflareAccountId,
-  name: "backtest-admin",
+    name: "quantago-admin",
   productionBranch: "main",
 });
 ```
@@ -610,7 +628,7 @@ const adminPages = new cloudflare.PagesProject("backtest-admin", {
 
 ```typescript
 app.use('*', cors({
-  origin: ['https://backtest.yourdomain.com', 'https://admin.yourdomain.com'],
+    origin: ['https://app.quantago.co', 'https://admin.quantago.co'],
   credentials: true,
 }));
 ```

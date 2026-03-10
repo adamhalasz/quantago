@@ -1,0 +1,13 @@
+{
+  "slug": "rsi-divergence-strategy",
+  "name": "RSI Divergence Strategy",
+  "description": "Finds price and RSI disagreement to catch reversals before trend confirmation arrives.",
+  "version": "1.0.0",
+  "defaultFrequency": "daily",
+  "minCandles": 14,
+  "lookbackCandles": 14,
+  "defaultConfig": {
+    "takeProfitLevel": 1.7,
+    "stopLossLevel": 0.8
+  }
+}

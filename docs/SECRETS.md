@@ -56,7 +56,7 @@ Value: [paste generated value]
 
 ```
 Name: VITE_API_URL
-Value: https://api.backtest.yourdomain.com
+Value: https://api.quantago.co
 ```
 
 The backend deployment must also use non-secret runtime variables for:

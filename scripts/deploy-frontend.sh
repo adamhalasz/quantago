@@ -3,7 +3,7 @@ set -e
 
 echo "🚢 Deploying frontend..."
 echo "Building..."
-pnpm --filter @backtest/frontend build
+pnpm --filter @quantago/frontend build
 echo "Deploying to Cloudflare Pages..."
-npx wrangler pages deploy services/frontend/dist --project-name=backtest-frontend
+npx wrangler pages deploy services/frontend/dist --project-name=quantago-app
 echo "✅ Frontend deployed successfully!"

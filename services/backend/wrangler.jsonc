@@ -1,6 +1,6 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
-    "name": "backtest-api",
+    "name": "quantago-api",
     "main": "src/index.ts",
     "compatibility_date": "2026-03-10",
     "compatibility_flags": [
@@ -31,6 +31,8 @@
             "class_name": "SymbolBackfillWorkflow"
         }
     ],
+    // Add an R2 bucket binding named STRATEGY_ARTIFACTS in each environment
+    // to persist strategy artifacts such as WebAssembly modules.
     "vars": {
         "BETTER_AUTH_URL": "http://localhost:8787",
         "FRONTEND_ORIGIN": "http://localhost:5173",

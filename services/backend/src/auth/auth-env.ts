@@ -4,8 +4,8 @@ const DEFAULT_AUTH_ORIGIN = 'http://localhost:8787';
 const DEFAULT_FRONTEND_ORIGIN = 'http://localhost:5173';
 const LOOPBACK_ORIGIN_PATTERNS = ['http://localhost:*', 'http://127.0.0.1:*'] as const;
 const DEFAULT_PAGES_ORIGIN_PATTERNS = [
-	/^https:\/\/backtest-frontend(?:-[a-z0-9]+)?\.pages\.dev$/,
-	/^https:\/\/backtest-admin(?:-[a-z0-9]+)?\.pages\.dev$/,
+	/^https:\/\/quantago-app(?:-[a-z0-9]+)?\.pages\.dev$/,
+	/^https:\/\/quantago-admin(?:-[a-z0-9]+)?\.pages\.dev$/,
 ] as const;
 
 const normalizeOrigin = (origin: string) => origin.replace(/\/$/, '');

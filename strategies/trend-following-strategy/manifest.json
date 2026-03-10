@@ -1,0 +1,13 @@
+{
+  "slug": "trend-following-strategy",
+  "name": "Trend Following Strategy",
+  "description": "Uses fast and slow exponential moving averages to trade sustained directional moves.",
+  "version": "1.0.0",
+  "defaultFrequency": "monthly",
+  "minCandles": 50,
+  "lookbackCandles": 50,
+  "defaultConfig": {
+    "takeProfitLevel": 2,
+    "stopLossLevel": 1
+  }
+}

@@ -2,15 +2,32 @@ import React from 'react';
 import { useLocation, useParams } from 'wouter';
 import { Brain, ArrowLeft, LineChart, Target, Clock, Scale, TrendingUp, TrendingDown } from 'lucide-react';
 import { Chart } from 'react-google-charts';
-import { STRATEGIES } from '@/lib/strategies';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { useStrategiesCatalog } from './strategies-hooks';
+
+const runtimeLabels = {
+	native: 'Native Runtime',
+	remote: 'Remote Runtime',
+	wasm: 'WASM Runtime',
+} as const;
+
+const runtimeDescriptions = {
+	native: 'Runs directly inside the platform runtime with the lowest overhead.',
+	remote: 'Runs behind the Strategy Protocol HTTP boundary so any language can participate.',
+	wasm: 'Reserved for portable high-performance strategies compiled to WebAssembly.',
+} as const;
 
 export function StrategyDetailsPage() {
 	const { name } = useParams();
 	const [, navigate] = useLocation();
-	const strategy = STRATEGIES.find((item) => item.name === decodeURIComponent(name || ''));
+	const { data: strategies, run } = useStrategiesCatalog();
+	const strategy = strategies.find((item) => item.name === decodeURIComponent(name || ''));
+
+	React.useEffect(() => {
+		void run();
+	}, [run]);
 
 	if (!strategy) {
 		return (
@@ -46,6 +63,9 @@ export function StrategyDetailsPage() {
 						<Badge variant="secondary" className="text-xs">
 							{strategy.defaultFrequency}
 						</Badge>
+						<Badge variant="outline" className="text-xs">
+							{strategy.runtime.language}
+						</Badge>
 					</div>
 					<h1 className="text-3xl font-bold text-gray-900 mb-2">{strategy.name}</h1>
 					<p className="text-lg text-gray-600">{strategy.description}</p>
@@ -59,7 +79,10 @@ export function StrategyDetailsPage() {
 						<h2 className="text-xl font-semibold mb-4">Strategy Overview</h2>
 						<div className="prose max-w-none">
 							<p className="text-gray-600">
-								The {strategy.name} is designed to capitalize on {strategy.description.toLowerCase()} This approach is particularly effective in{' '}
+								The {strategy.name} is designed to capitalize on {strategy.description.toLowerCase()} This strategy is published as version {strategy.version} and currently runs through the {runtimeLabels[strategy.runtime.type].toLowerCase()}.
+							</p>
+							<p className="text-gray-600">
+								{runtimeDescriptions[strategy.runtime.type]} This approach is particularly effective in{' '}
 								{strategy.defaultFrequency === 'scalping'
 									? 'short-term, high-frequency trading environments'
 									: strategy.defaultFrequency === 'daily'
@@ -72,15 +95,15 @@ export function StrategyDetailsPage() {
 					</div>
 
 					<div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-						<h2 className="text-xl font-semibold mb-4">Implementation Guide</h2>
+						<h2 className="text-xl font-semibold mb-4">Protocol Guide</h2>
 						<div className="space-y-4">
 							<div className="flex items-start gap-4">
 								<div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
 									<span className="text-indigo-600 font-semibold">1</span>
 								</div>
 								<div>
-									<h3 className="font-medium text-gray-900">Setup Indicators</h3>
-									<p className="text-gray-600 mt-1">Configure the following technical indicators on your chart:</p>
+									<h3 className="font-medium text-gray-900">Runtime Contract</h3>
+									<p className="text-gray-600 mt-1">The platform sends one candle at a time plus bounded history and the current portfolio snapshot.</p>
 									<ul className="mt-2 space-y-2">
 										{strategy.indicators.map((indicator) => (
 											<li key={indicator} className="flex items-center text-sm text-gray-600">
@@ -97,15 +120,15 @@ export function StrategyDetailsPage() {
 									<span className="text-indigo-600 font-semibold">2</span>
 								</div>
 								<div>
-									<h3 className="font-medium text-gray-900">Entry Rules</h3>
+									<h3 className="font-medium text-gray-900">Signal Output</h3>
 									<ul className="mt-2 space-y-2">
 										<li className="flex items-center text-sm text-gray-600">
 											<TrendingUp className="w-4 h-4 mr-2 text-green-600" />
-											Buy Signal: {strategy.name.includes('RSI') ? 'RSI below 30 with positive divergence' : strategy.name.includes('MACD') ? 'MACD crosses above signal line' : strategy.name.includes('Moving Average') ? 'Fast MA crosses above slow MA' : 'Price shows strong upward momentum'}
+											Buy Signal: return `BUY` with an optional position size and reason.
 										</li>
 										<li className="flex items-center text-sm text-gray-600">
 											<TrendingDown className="w-4 h-4 mr-2 text-red-600" />
-											Sell Signal: {strategy.name.includes('RSI') ? 'RSI above 70 with negative divergence' : strategy.name.includes('MACD') ? 'MACD crosses below signal line' : strategy.name.includes('Moving Average') ? 'Fast MA crosses below slow MA' : 'Price shows strong downward momentum'}
+											Sell Signal: return `SELL`; otherwise return `HOLD` to leave execution unchanged.
 										</li>
 									</ul>
 								</div>
@@ -116,7 +139,7 @@ export function StrategyDetailsPage() {
 									<span className="text-indigo-600 font-semibold">3</span>
 								</div>
 								<div>
-									<h3 className="font-medium text-gray-900">Risk Management</h3>
+									<h3 className="font-medium text-gray-900">Default Execution Parameters</h3>
 									<ul className="mt-2 space-y-2">
 										<li className="flex items-center text-sm text-gray-600">
 											<Target className="w-4 h-4 mr-2 text-indigo-600" />
@@ -135,11 +158,11 @@ export function StrategyDetailsPage() {
 									<span className="text-indigo-600 font-semibold">4</span>
 								</div>
 								<div>
-									<h3 className="font-medium text-gray-900">Timeframe Selection</h3>
+									<h3 className="font-medium text-gray-900">History Requirements</h3>
 									<ul className="mt-2 space-y-2">
 										<li className="flex items-center text-sm text-gray-600">
 											<Clock className="w-4 h-4 mr-2 text-indigo-600" />
-											Primary: {strategy.defaultFrequency === 'scalping' ? '1-minute to 5-minute charts' : strategy.defaultFrequency === 'daily' ? '15-minute to 1-hour charts' : strategy.defaultFrequency === 'weekly' ? '4-hour to daily charts' : 'Daily to weekly charts'}
+											Recommended timeframe: {strategy.recommendedTimeframe} · Minimum candles: {strategy.minCandles} · Lookback window: {strategy.lookbackCandles}
 										</li>
 									</ul>
 								</div>
@@ -174,7 +197,12 @@ export function StrategyDetailsPage() {
 						<div className="space-y-4">
 							<div>
 								<div className="text-sm text-gray-600">Recommended Timeframe</div>
-								<div className="font-medium">{strategy.defaultFrequency}</div>
+								<div className="font-medium">{strategy.recommendedTimeframe}</div>
+							</div>
+							<Separator />
+							<div>
+								<div className="text-sm text-gray-600">Runtime</div>
+								<div className="font-medium">{runtimeLabels[strategy.runtime.type]} · {strategy.runtime.language}</div>
 							</div>
 							<Separator />
 							<div>
@@ -205,11 +233,11 @@ export function StrategyDetailsPage() {
 						<div className="space-y-3">
 							<div className="flex items-center gap-2 text-sm text-gray-600">
 								<div className="w-2 h-2 rounded-full bg-green-500"></div>
-								{strategy.name.includes('Momentum') ? 'Strong trending markets' : strategy.name.includes('Mean') ? 'Range-bound markets' : strategy.name.includes('Breakout') ? 'Volatile markets with clear levels' : strategy.name.includes('Scalping') ? 'High liquidity periods' : 'All market conditions'}
+								{strategy.runtime.type === 'remote' ? 'Strategies that depend on external research libraries or custom infrastructure' : 'Strategies that fit the built-in execution profile'}
 							</div>
 							<div className="flex items-center gap-2 text-sm text-gray-600">
 								<div className="w-2 h-2 rounded-full bg-red-500"></div>
-								{strategy.name.includes('Momentum') ? 'Sideways, choppy markets' : strategy.name.includes('Mean') ? 'Strong trending markets' : strategy.name.includes('Breakout') ? 'Low volatility periods' : strategy.name.includes('Scalping') ? 'Low liquidity periods' : 'Extreme volatility'}
+								{strategy.runtime.type === 'remote' ? 'Environments with unreliable network access or slow response times' : 'Market conditions that do not match the strategy assumptions'}
 							</div>
 						</div>
 					</div>

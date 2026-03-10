@@ -1,0 +1,13 @@
+{
+  "slug": "swing-trading-strategy",
+  "name": "Swing Trading Strategy",
+  "description": "Waits for broader MACD and RSI confirmation suitable for multi-session swings.",
+  "version": "1.0.0",
+  "defaultFrequency": "weekly",
+  "minCandles": 26,
+  "lookbackCandles": 26,
+  "defaultConfig": {
+    "takeProfitLevel": 2.5,
+    "stopLossLevel": 1.2
+  }
+}

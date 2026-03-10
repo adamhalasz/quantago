@@ -1,6 +1,6 @@
 # Admin Service
 
-Admin dashboard for the backtest platform. Provides admin-only access to:
+Admin dashboard for Quantago. Provides admin-only access to:
 - Manual ingestion triggers
 - Realtime ingestion monitoring
 - System administration

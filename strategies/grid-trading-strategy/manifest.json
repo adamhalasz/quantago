@@ -1,0 +1,13 @@
+{
+  "slug": "grid-trading-strategy",
+  "name": "Grid Trading Strategy",
+  "description": "Buys below and sells above a recent average price band to exploit short-term oscillation.",
+  "version": "1.0.0",
+  "defaultFrequency": "daily",
+  "minCandles": 20,
+  "lookbackCandles": 20,
+  "defaultConfig": {
+    "takeProfitLevel": 0.5,
+    "stopLossLevel": 0.3
+  }
+}

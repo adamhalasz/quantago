@@ -2,10 +2,12 @@ import { AppError } from '../errors';
 import { getMarketDataProvider } from '../market-data-provider-registry';
 import { inferAssetClass } from '../market-data-yahoo-provider';
 import type { MarketAssetClass, MarketDataProviderId } from '../market-data-types';
+import type { BackendEnv } from '../../worker-types';
 import { calculateMACD, calculateRSI } from './indicators';
-import { getStrategy } from './strategies';
+import { runStrategySignal } from './strategy-runner';
+import { resolveStrategyDefinitionForExecution } from './strategies';
 import { EntryFrequency } from './types';
-import type { BacktestExecutionConfig, BacktestRunResult, Candle, Trade } from './types';
+import type { BacktestExecutionConfig, BacktestRunResult, Candle, StrategyDefinition, StrategyExecutionInput, Trade } from './types';
 
 const EXCHANGES = [
   { id: 'london', name: 'London', timezone: 'Europe/London', hours: { open: 8, close: 16 }, isAlwaysOpen: false },
@@ -76,6 +78,98 @@ const calculateMaxDrawdown = (initialBalance: number, trades: Trade[]) => {
   return maxDrawdown;
 };
 
+const toProtocolCandle = (candle: Candle) => ({
+  time: candle.time.toISOString(),
+  open: candle.open,
+  high: candle.high,
+  low: candle.low,
+  close: candle.close,
+  volume: candle.volume,
+});
+
+const buildStrategyExecutionInput = (input: {
+  candles: Candle[];
+  index: number;
+  balance: number;
+  position: {
+    type: 'BUY' | 'SELL';
+    entryPrice: number;
+    entryTime: Date;
+    signals: Record<string, unknown>;
+  } | null;
+  lastTradeExitTime: Date | null;
+  config: BacktestExecutionConfig;
+  strategy: StrategyDefinition;
+}): StrategyExecutionInput => {
+  const currentCandle = input.candles[input.index];
+  const lookbackCandles = input.strategy.runtime.type === 'remote'
+    ? (input.strategy.runtime.lookbackCandles ?? input.strategy.lookbackCandles)
+    : input.strategy.lookbackCandles;
+  const historyStart = Math.max(0, input.index - lookbackCandles + 1);
+  const history = input.candles.slice(historyStart, input.index + 1).map(toProtocolCandle);
+  const positionSize = typeof input.position?.signals.position === 'object' && input.position?.signals.position !== null
+    ? (input.position.signals.position as { size?: number }).size
+    : undefined;
+  const unrealizedPnl = !input.position
+    ? 0
+    : ((input.position.type === 'BUY'
+      ? currentCandle.close - input.position.entryPrice
+      : input.position.entryPrice - currentCandle.close) * (positionSize ?? 1));
+
+  return {
+    candle: toProtocolCandle(currentCandle),
+    history,
+    portfolio: {
+      cash: input.balance,
+      equity: input.balance + unrealizedPnl,
+      openPosition: input.position
+        ? {
+          type: input.position.type,
+          entryPrice: input.position.entryPrice,
+          entryTime: input.position.entryTime.toISOString(),
+          size: positionSize ?? 1,
+          unrealizedPnl,
+        }
+        : null,
+      lastTradeAt: input.lastTradeExitTime ? input.lastTradeExitTime.toISOString() : null,
+    },
+    parameters: input.config.strategyParameters,
+    context: {
+      index: input.index,
+      totalCandles: input.candles.length,
+      timeframe: input.config.timeframe,
+      strategy: {
+        name: input.strategy.name,
+        version: input.strategy.version,
+        runtime: input.strategy.runtime.type,
+        language: input.strategy.runtime.language,
+      },
+    },
+  };
+};
+
+const validateStrategyContract = async (input: {
+  env: BackendEnv;
+  candles: Candle[];
+  balance: number;
+  config: BacktestExecutionConfig;
+  strategy: StrategyDefinition;
+}) => {
+  const validationWindow = Math.min(10, input.candles.length);
+
+  for (let index = 0; index < validationWindow; index += 1) {
+    await runStrategySignal(input.env, input.strategy, buildStrategyExecutionInput({
+      candles: input.candles,
+      index,
+      balance: input.balance,
+      position: null,
+      lastTradeExitTime: null,
+      config: input.config,
+      strategy: input.strategy,
+    }));
+  }
+};
+
 const buildCandleSeries = async (config: BacktestExecutionConfig): Promise<Candle[]> => {
   const provider = getMarketDataProvider(config.provider);
   const startTime = new Date(config.startDate);
@@ -118,6 +212,8 @@ const buildCandleSeries = async (config: BacktestExecutionConfig): Promise<Candl
 };
 
 export const resolveBacktestExecutionConfig = (input: {
+  env: BackendEnv;
+  userId: string;
   symbol: string;
   exchange: string;
   strategy: string;
@@ -125,37 +221,44 @@ export const resolveBacktestExecutionConfig = (input: {
   endDate: string;
   initialBalance: number;
   parameters: Record<string, unknown>;
-}): BacktestExecutionConfig => {
-  const strategy = getStrategy(input.strategy);
-  if (!strategy) {
-    throw new AppError(`Unsupported strategy: ${input.strategy}`, 501);
-  }
+}): Promise<BacktestExecutionConfig> => {
+  const strategy = resolveStrategyDefinitionForExecution({
+    env: input.env,
+    userId: input.userId,
+    strategyName: input.strategy,
+    parameters: input.parameters,
+  });
 
-  return {
-    symbol: input.symbol,
-    exchange: input.exchange,
-    strategy: input.strategy,
-    startDate: input.startDate,
-    endDate: input.endDate,
-    initialBalance: input.initialBalance,
-    timeframe: typeof input.parameters.timeframe === 'string' ? input.parameters.timeframe : strategy.defaultConfig.timeframe ?? '1d',
-    entryFrequency: Object.values(EntryFrequency).includes(input.parameters.entryFrequency as EntryFrequency)
-      ? (input.parameters.entryFrequency as EntryFrequency)
-      : strategy.defaultFrequency,
-    assetClass: (input.parameters.assetClass as MarketAssetClass | undefined) ?? inferAssetClass(input.symbol),
-    provider: (input.parameters.provider as MarketDataProviderId | undefined) ?? 'yahoo',
-    riskPerTrade: typeof input.parameters.riskPerTrade === 'number' ? input.parameters.riskPerTrade : 2,
-    maxTradeTime: typeof input.parameters.maxTradeTime === 'number' ? input.parameters.maxTradeTime : 8,
-    takeProfitLevel: typeof input.parameters.takeProfitLevel === 'number' ? input.parameters.takeProfitLevel : undefined,
-    stopLossLevel: typeof input.parameters.stopLossLevel === 'number' ? input.parameters.stopLossLevel : undefined,
-  };
+  return strategy.then((resolvedStrategy) => {
+    if (!resolvedStrategy) {
+      throw new AppError(`Unsupported strategy: ${input.strategy}`, 501);
+    }
+
+    return {
+      symbol: input.symbol,
+      exchange: input.exchange,
+      strategy: input.strategy,
+      strategyDefinition: resolvedStrategy,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      initialBalance: input.initialBalance,
+      timeframe: typeof input.parameters.timeframe === 'string' ? input.parameters.timeframe : resolvedStrategy.defaultConfig.timeframe ?? '1d',
+      entryFrequency: Object.values(EntryFrequency).includes(input.parameters.entryFrequency as EntryFrequency)
+        ? (input.parameters.entryFrequency as EntryFrequency)
+        : resolvedStrategy.defaultFrequency,
+      assetClass: (input.parameters.assetClass as MarketAssetClass | undefined) ?? inferAssetClass(input.symbol),
+      provider: (input.parameters.provider as MarketDataProviderId | undefined) ?? 'yahoo',
+      riskPerTrade: typeof input.parameters.riskPerTrade === 'number' ? input.parameters.riskPerTrade : 2,
+      maxTradeTime: typeof input.parameters.maxTradeTime === 'number' ? input.parameters.maxTradeTime : 8,
+      strategyParameters: input.parameters,
+      takeProfitLevel: typeof input.parameters.takeProfitLevel === 'number' ? input.parameters.takeProfitLevel : undefined,
+      stopLossLevel: typeof input.parameters.stopLossLevel === 'number' ? input.parameters.stopLossLevel : undefined,
+    };
+  });
 };
 
-export const runBacktest = async (config: BacktestExecutionConfig): Promise<BacktestRunResult> => {
-  const strategy = getStrategy(config.strategy);
-  if (!strategy) {
-    throw new AppError(`Unsupported strategy: ${config.strategy}`, 501);
-  }
+export const runBacktest = async (env: BackendEnv, config: BacktestExecutionConfig): Promise<BacktestRunResult> => {
+  const strategy = config.strategyDefinition;
 
   const candles = await buildCandleSeries(config);
   if (candles.length < strategy.minCandles) {
@@ -164,6 +267,14 @@ export const runBacktest = async (config: BacktestExecutionConfig): Promise<Back
       422,
     );
   }
+
+  await validateStrategyContract({
+    env,
+    candles,
+    balance: config.initialBalance,
+    config,
+    strategy,
+  });
 
   const exchange = EXCHANGES.find((item) => item.id === config.exchange)!;
   const minTimeBetweenTrades = getMinTimeBetweenTrades(config.entryFrequency);
@@ -186,9 +297,17 @@ export const runBacktest = async (config: BacktestExecutionConfig): Promise<Back
   };
 
   for (let index = 0; index < candles.length; index += 1) {
-    const signal = strategy.calculateSignal(candles, index);
     const currentCandle = candles[index];
     const previousCandle = index > 0 ? candles[index - 1] : null;
+    const signal = await runStrategySignal(env, strategy, buildStrategyExecutionInput({
+      candles,
+      index,
+      balance,
+      position,
+      lastTradeExitTime,
+      config,
+      strategy,
+    }));
     const rsi = calculateRSI(candles, index);
     const macd = calculateMACD(candles, index);
     const volatility = calculateVolatility(candles, index);
@@ -220,11 +339,12 @@ export const runBacktest = async (config: BacktestExecutionConfig): Promise<Back
           volatility,
           session: { hour: exchangeHour, market: exchange.name },
           position: {
-            size: calculatePositionSize(currentCandle.close),
+            size: signal.size ?? calculatePositionSize(currentCandle.close),
             risk: config.riskPerTrade,
             takeProfitLevel: config.takeProfitLevel ?? defaults.takeProfitLevel,
             stopLossLevel: config.stopLossLevel ?? defaults.stopLossLevel,
           },
+          strategy: signal.metadata ?? {},
         },
       };
       continue;

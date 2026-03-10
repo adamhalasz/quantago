@@ -1,0 +1,13 @@
+{
+  "slug": "bollinger-bands-strategy",
+  "name": "Bollinger Bands Strategy",
+  "description": "Trades fresh crosses outside the upper or lower Bollinger Band envelope.",
+  "version": "1.0.0",
+  "defaultFrequency": "daily",
+  "minCandles": 20,
+  "lookbackCandles": 20,
+  "defaultConfig": {
+    "takeProfitLevel": 1.5,
+    "stopLossLevel": 0.8
+  }
+}

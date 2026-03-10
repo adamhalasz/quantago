@@ -1,7 +1,7 @@
 import { TriggerClient } from '@trigger.dev/sdk';
 
 export const client = new TriggerClient({
-  id: 'trendsurfer',
+  id: 'quantago',
   apiKey: process.env.TRIGGER_API_KEY || '',
   apiUrl: process.env.TRIGGER_API_URL || 'https://api.trigger.dev',
 });

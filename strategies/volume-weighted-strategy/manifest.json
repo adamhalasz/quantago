@@ -1,0 +1,13 @@
+{
+  "slug": "volume-weighted-strategy",
+  "name": "Volume Weighted Strategy",
+  "description": "Trades VWAP dislocations when elevated volume confirms a meaningful move.",
+  "version": "1.0.0",
+  "defaultFrequency": "daily",
+  "minCandles": 20,
+  "lookbackCandles": 20,
+  "defaultConfig": {
+    "takeProfitLevel": 1.4,
+    "stopLossLevel": 0.7
+  }
+}

@@ -3,8 +3,7 @@ import { useLocation } from 'wouter';
 import { Brain } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { STRATEGIES } from '@/lib/strategies';
-import { useFetchStrategyStats } from './strategies-hooks';
+import { useFetchStrategyStats, useStrategiesCatalog } from './strategies-hooks';
 
 const formatPercent = (value: number) => {
   return new Intl.NumberFormat('en-US', {
@@ -16,7 +15,12 @@ const formatPercent = (value: number) => {
 
 export function StrategiesPage() {
   const [, navigate] = useLocation();
+  const { data: strategies, error: strategiesError, run: runCatalog } = useStrategiesCatalog();
   const { data: strategyStats, isLoading, error, run } = useFetchStrategyStats();
+
+  React.useEffect(() => {
+    void runCatalog();
+  }, [runCatalog]);
 
   React.useEffect(() => {
     void run();
@@ -32,8 +36,8 @@ export function StrategiesPage() {
         <Brain className="h-12 w-12 text-indigo-600" />
       </div>
 
-      {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      {error || strategiesError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error || strategiesError}</div>
       ) : null}
 
       {isLoading ? (
@@ -42,7 +46,7 @@ export function StrategiesPage() {
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
-          {STRATEGIES.map((strategy) => {
+          {strategies.map((strategy) => {
             const stats = strategyStats[strategy.name];
 
             return (
@@ -61,6 +65,8 @@ export function StrategiesPage() {
                       {indicator}
                     </Badge>
                   ))}
+                  <Badge variant="secondary">{strategy.runtime.language}</Badge>
+                  <Badge variant="outline">v{strategy.version}</Badge>
                 </div>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -84,7 +90,7 @@ export function StrategiesPage() {
 
                 <div className="mt-6 flex items-center justify-between">
                   <div className="text-sm text-gray-500">
-                    Best trade: {(stats?.bestTrade ?? 0).toFixed(2)}% · Worst trade: {(stats?.worstTrade ?? 0).toFixed(2)}%
+                    Best trade: {(stats?.bestTrade ?? 0).toFixed(2)}% · Worst trade: {(stats?.worstTrade ?? 0).toFixed(2)}% · Min candles: {strategy.minCandles}
                   </div>
                   <Button onClick={() => navigate(`/strategies/${encodeURIComponent(strategy.name)}`)} variant="outline">
                     View Details

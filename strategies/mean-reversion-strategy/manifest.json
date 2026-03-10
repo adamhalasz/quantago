@@ -1,0 +1,13 @@
+{
+  "slug": "mean-reversion-strategy",
+  "name": "Mean Reversion Strategy",
+  "description": "Looks for price dislocations outside Bollinger Bands and trades the expected snap back toward mean value.",
+  "version": "1.0.0",
+  "defaultFrequency": "weekly",
+  "minCandles": 20,
+  "lookbackCandles": 20,
+  "defaultConfig": {
+    "takeProfitLevel": 1,
+    "stopLossLevel": 0.5
+  }
+}

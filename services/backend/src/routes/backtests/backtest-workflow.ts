@@ -11,6 +11,7 @@ type BacktestWorkflowParams = {
 
 type BacktestWorkflowState = {
   id: string;
+  user_id: string;
   symbol: string;
   exchange: string;
   strategy: string;
@@ -32,6 +33,7 @@ export class BacktestWorkflow extends WorkflowEntrypoint<BackendEnv, BacktestWor
 
       return {
         id: row.id,
+        user_id: row.user_id,
         symbol: row.symbol,
         exchange: row.exchange,
         strategy: row.strategy,
@@ -65,7 +67,9 @@ export class BacktestWorkflow extends WorkflowEntrypoint<BackendEnv, BacktestWor
           };
         }
 
-        const config = resolveBacktestExecutionConfig({
+        const config = await resolveBacktestExecutionConfig({
+          env: this.env,
+          userId: backtest.user_id,
           symbol: backtest.symbol,
           exchange: backtest.exchange,
           strategy: backtest.strategy,
@@ -74,7 +78,7 @@ export class BacktestWorkflow extends WorkflowEntrypoint<BackendEnv, BacktestWor
           initialBalance: backtest.initial_balance,
           parameters,
         });
-        const result = await runBacktest(config);
+        const result = await runBacktest(this.env, config);
         await completeBacktestRunById(this.env, backtest.id, result);
 
         return {

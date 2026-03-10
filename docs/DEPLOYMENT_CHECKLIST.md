@@ -39,8 +39,8 @@ Use this checklist before and during deployment.
 - [ ] Verify: `npx wrangler whoami`
 
 ### Create Projects
-- [ ] Frontend Pages project created (`backtest-frontend`)
-- [ ] Admin Pages project created (`backtest-admin`)
+- [ ] Frontend Pages project created (`quantago-app`)
+- [ ] Admin Pages project created (`quantago-admin`)
 
 ### Backend Secrets
 Set these with `cd services/backend && wrangler secret put SECRET_NAME`:
@@ -67,9 +67,10 @@ Set these with `cd services/backend && wrangler secret put SECRET_NAME`:
 ### Option 2: Manual Deployment
 - [ ] Deploy backend: `cd services/backend && npx wrangler deploy`
 - [ ] Build frontend: `cd services/frontend && pnpm build`
-- [ ] Deploy frontend: `cd services/frontend && npx wrangler pages deploy dist --project-name=backtest-frontend`
+- [ ] Deploy frontend: `cd services/frontend && npx wrangler pages deploy dist --project-name=quantago-app`
 - [ ] Build admin: `cd services/admin && pnpm build`
-- [ ] Deploy admin: `cd services/admin && npx wrangler pages deploy dist --project-name=backtest-admin`
+- [ ] Deploy admin: `cd services/admin && npx wrangler pages deploy dist --project-name=quantago-admin`
+- [ ] Deploy landing: `cd services/landing && npx wrangler deploy`
 
 Or use the convenience script: `pnpm run deploy:all`
 
@@ -83,8 +84,9 @@ Or use the convenience script: `pnpm run deploy:all`
 
 ### Verification
 - [ ] Backend health check: `curl https://api.yourdomain.com/api/health`
-- [ ] Frontend loads: https://backtest.yourdomain.com
-- [ ] Admin login works: https://admin.yourdomain.com
+- [ ] Frontend loads: https://app.quantago.co
+- [ ] Admin login works: https://admin.quantago.co
+- [ ] Landing loads: https://quantago.co
 - [ ] Test authentication flow
 - [ ] Test admin ingestion trigger
 
