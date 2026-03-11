@@ -3,6 +3,7 @@ id: backend-standards
 slug: /standards/backend
 sidebar_label: Backend Standards
 description: Backend conventions for Hono routes, workflows, data access, and auth.
+unlisted: true
 ---
 
 # Backend Standards

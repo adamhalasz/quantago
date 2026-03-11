@@ -1,20 +1,20 @@
 ---
-id: strategy-protocol
-slug: /strategy-protocol
-sidebar_label: Strategy Protocol
-description: Runtime-agnostic contract for Quantago strategies across native and remote execution.
+id: runtime-contract
+slug: /runtimes/strategy-contract
+sidebar_label: Strategy Contract
+description: Runtime-agnostic contract for strategies across native, remote, and WASM execution.
 ---
 
-# Strategy Protocol
+# Strategy Contract
 
-This document defines the contract between the platform and a trading strategy. The goal is to keep strategy code decoupled from the execution runtime so TypeScript, Python, Rust, Go, and future languages can all behave like first-class citizens.
+Quantago talks to every strategy through the same contract. The goal is to make the execution runtime replaceable without changing how the backtest engine thinks.
 
-## Design Goals
+## Why This Contract Exists
 
-- Keep the platform responsible for orchestration, execution, P&L, storage, and charting.
-- Keep the strategy responsible for one decision at a time.
-- Make the contract transportable across native TypeScript, remote HTTP, and future WASM runtimes.
-- Make strategies versioned and reproducible.
+- The platform owns orchestration, order simulation, storage, and charts.
+- The strategy owns a single decision for a single candle.
+- The payload shape stays stable whether the strategy is native, remote, or WASM.
+- Versioning stays explicit so a backtest can be reproduced later.
 
 ## Core Contract
 
@@ -88,7 +88,7 @@ Rules:
 - `metadata` is optional and is persisted alongside strategy signals for analysis.
 - Strategies are expected to behave like pure functions of the supplied input.
 
-## Execution Tiers
+## Runtime Modes
 
 ### Tier 1: Native TypeScript
 
@@ -98,7 +98,7 @@ Built-in TypeScript strategies execute inside the backend runtime with no transp
 - Language: `typescript`
 - Best for the fastest local iteration inside the existing codebase
 
-### Tier 2: Remote HTTP
+### Remote HTTP
 
 Remote strategies run anywhere and expose a single HTTP endpoint that accepts the protocol payload.
 
@@ -115,7 +115,7 @@ Content-Type: application/json
 
 The request body is the full protocol payload shown above.
 
-### Tier 3: WASM
+### WASM
 
 WASM is now supported through a simple JSON-over-memory ABI. This tier is intended for portable high-performance strategies compiled from Rust, Go, C, C++, Zig, AssemblyScript, and similar languages.
 
@@ -155,7 +155,7 @@ Each strategy definition contains:
 - `defaultConfig`: platform-level default execution settings
 - `parameterSchema`: JSON-schema-like form metadata used by the UI and validation layer
 
-## Persisted Registry
+## Registry Model
 
 Persisted strategies are stored in Postgres and versioned independently of backtests:
 
@@ -263,7 +263,7 @@ This is the first enforcement step. Synthetic fixture validation and managed pac
 
 ## Python SDK
 
-The repository now includes a zero-dependency Python SDK and CLI in `sdks/python`.
+The repository includes a zero-dependency Python SDK and CLI in `sdks/python`.
 
 Install locally:
 
@@ -283,4 +283,4 @@ This exposes:
 - `POST /signal`
 - `GET /health`
 
-The Python SDK maps the JSON protocol payload into typed dataclasses and expects strategies to return `Signal.buy(...)`, `Signal.sell(...)`, or `Signal.hold(...)`.
+The Python SDK maps the JSON payload into typed dataclasses and expects strategies to return `Signal.buy(...)`, `Signal.sell(...)`, or `Signal.hold(...)`.

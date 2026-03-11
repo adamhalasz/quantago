@@ -3,6 +3,7 @@ id: secrets
 slug: /secrets
 sidebar_label: Secrets
 description: GitHub Actions and deployment secret reference for Quantago.
+unlisted: true
 ---
 
 # GitHub Secrets Quick Reference

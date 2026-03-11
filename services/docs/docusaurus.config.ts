@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'Quantago Docs',
   tagline:
-    'Platform guides, architecture notes, deployment references, and strategy runtime docs.',
+    'Guide-first docs for the Quantago REST API, Python SDK, WASM runtime, and self-hosting.',
   favicon: 'img/quantago-logo.png',
 
   future: {
@@ -64,7 +64,7 @@ const config: Config = {
           type: 'doc',
           docId: 'intro',
           position: 'left',
-          label: 'Docs',
+          label: 'Guide',
         },
         {
           href: 'https://app.quantago.co',
@@ -85,16 +85,16 @@ const config: Config = {
           title: 'Documentation',
           items: [
             {
-              label: 'Quick Start',
-              to: '/quickstart',
+              label: 'Getting Started',
+              to: '/getting-started',
             },
             {
-              label: 'Architecture',
-              to: '/architecture',
+              label: 'REST API',
+              to: '/api/rest-api',
             },
             {
-              label: 'Deployment',
-              to: '/deployment',
+              label: 'Self-Hosting',
+              to: '/self-hosting',
             },
           ],
         },
@@ -128,7 +128,7 @@ const config: Config = {
             },
             {
               label: 'Python SDK',
-              href: 'https://github.com/adamhalasz/backtest/tree/main/sdks/python',
+              to: '/runtimes/python-sdk',
             },
           ],
         },

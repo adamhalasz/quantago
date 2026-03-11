@@ -3,6 +3,7 @@ id: zustand-standards
 slug: /standards/zustand
 sidebar_label: Zustand Standards
 description: Async action and state management standards for Zustand stores.
+unlisted: true
 ---
 
 # Zustand Async Action Standards

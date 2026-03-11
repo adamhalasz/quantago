@@ -3,6 +3,7 @@ id: deployment-checklist
 slug: /deployment-checklist
 sidebar_label: Deployment Checklist
 description: Preflight checklist for deploying Quantago to production.
+unlisted: true
 ---
 
 # Deployment Checklist

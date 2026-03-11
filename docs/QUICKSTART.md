@@ -1,199 +1,102 @@
 ---
-id: quickstart
-slug: /quickstart
-sidebar_label: Quick Start
-description: Fast-track setup and deployment guide for Quantago.
+id: getting-started
+slug: /getting-started
+sidebar_label: Getting Started
+description: Practical first steps for integrating with Quantago.
 ---
 
-# Quick Start Guide
+# Getting Started
 
-## Deploy to Production
+This guide is for developers who want to understand the fastest path into the platform.
 
-### Option 1: Automated Setup Script
+## What Quantago Gives You
 
-Run the interactive setup script:
+- historical market data access
+- authenticated backtest execution
+- a strategy catalog that can mix built-in, remote, and WASM strategies
+- a runtime contract that stays consistent across languages
 
-```bash
-chmod +x setup.sh
-./setup.sh
-```
+If you already know which interface you want, skip directly to the relevant section:
 
-The script covers:
-- Creating Cloudflare Pages projects
-- Setting worker secrets
-- Deploying all services
+- [REST API Overview](/api/rest-api)
+- [Python SDK](/runtimes/python-sdk)
+- [WASM Runtime](/runtimes/wasm)
+- [Self-Hosting Overview](/self-hosting)
 
-### Option 2: Manual Deployment
+## Recommended Onboarding Order
 
-#### 1. Login to Cloudflare
-```bash
-npx wrangler login
-```
+1. Read [How Quantago Works](/concepts/how-quantago-works) to understand the execution model.
+2. Use [REST API Authentication](/api/authentication) to establish a session.
+3. Fetch a small slice of [market data](/api/market-data).
+4. Create a [backtest](/api/backtests).
+5. If you need custom logic, choose either the [Python SDK](/runtimes/python-sdk) or [WASM Runtime](/runtimes/wasm).
 
-#### 2. Create Pages Projects
-```bash
-npx wrangler pages project create quantago-app
-npx wrangler pages project create quantago-admin
-```
+## Your First End-to-End Flow
 
-#### 3. Run Database Migrations
-```bash
-export DATABASE_URL="your-production-database-url"
-cd services/backend
-psql "$DATABASE_URL" -f src/db/migrations/0001_init.sql
-psql "$DATABASE_URL" -f src/db/migrations/0002_better_auth.sql
-psql "$DATABASE_URL" -f src/db/migrations/0003_backtest_workflows.sql
-psql "$DATABASE_URL" -f src/db/migrations/0004_ingestion_metadata.sql
-psql "$DATABASE_URL" -f src/db/migrations/0005_add_user_roles.sql
-cd ../..
-```
-
-#### 4. Set Backend Secrets
-```bash
-cd services/backend
-wrangler secret put DATABASE_URL
-wrangler secret put BETTER_AUTH_SECRET
-wrangler secret put INGESTION_ADMIN_SECRET
-wrangler secret put CLICKHOUSE_URL
-wrangler secret put CLICKHOUSE_USERNAME
-wrangler secret put CLICKHOUSE_PASSWORD
-cd ../..
-```
-
-#### 5. Deploy All Services
-```bash
-pnpm run deploy:all
-```
-
-This will execute deployment scripts located in `scripts/` directory:
-- `deploy-backend.sh` - Deploys the Worker API
-- `deploy-frontend.sh` - Builds and deploys the frontend to Pages
-- `deploy-admin.sh` - Builds and deploys the admin dashboard to Pages
-- `deploy-docs.sh` - Builds and deploys the documentation site to Pages
-- `deploy-landing.sh` - Deploys the SSR landing site to the apex domain
-
-### Option 3: GitHub Actions
-
-1. Set GitHub Secrets (see [GitHub Secrets Quick Reference](./secrets))
-2. Push to `main` branch
-3. GitHub Actions will automatically deploy
-
-## Services
-
-### Backend Worker
-- **API endpoints**: All backend routes
-- **Workflows**: Async job processing
-- **URL**: `quantago-api.workers.dev`
-
-### Frontend Pages
-- **Main app**: User interface
-- **URL**: `quantago-app.pages.dev`
-
-### Admin Pages
-- **Admin dashboard**: Ingestion management
-- **URL**: `quantago-admin.pages.dev`
-
-### Docs Pages
-- **Documentation site**: Product, deployment, and strategy references
-- **URL**: `quantago-docs.pages.dev`
-
-### Landing Worker
-- **Marketing site**: Quantago landing page and legal links
-- **URL**: `quantago-web.workers.dev`
-
-## Required Secrets
-
-Generate secrets:
-```bash
-# BETTER_AUTH_SECRET
-openssl rand -base64 32
-
-# INGESTION_ADMIN_SECRET
-openssl rand -base64 32
-```
-
-Set in Cloudflare:
-- DATABASE_URL
-- BETTER_AUTH_SECRET
-- INGESTION_ADMIN_SECRET
-- CLICKHOUSE_URL
-- CLICKHOUSE_USERNAME
-- CLICKHOUSE_PASSWORD
-
-## Custom Domains
-
-After deployment, add custom domains in Cloudflare Dashboard:
-- `api.yourdomain.com` → Backend Worker
-- `app.quantago.co` → Frontend Pages
-- `admin.quantago.co` → Admin Pages
-- `docs.quantago.co` → Docs Pages
-- `quantago.co` → Landing Worker
-
-## ClickHouse Setup
-
-Ensure database exists:
-```sql
-CREATE DATABASE IF NOT EXISTS market_data;
-```
-
-Schema will be auto-created on first ingestion.
-
-## Create Admin User
-
-After deployment, run this SQL on your production database:
-
-```sql
--- Option 1: Update existing user to admin
-UPDATE "user" SET role = 'admin' WHERE email = 'your-email@example.com';
-
--- Option 2: Create new admin user (requires setting password via auth API)
-INSERT INTO "user" (id, email, name, email_verified, role, created_at, updated_at)
-VALUES (
-  gen_random_uuid()::text,
-  'admin@example.com',
-  'Admin User',
-  false,
-  'admin',
-  NOW(),
-  NOW()
-);
-```
-
-## Documentation
-
-- **Deployment Guide**: [Deployment Guide](./deployment)
-- **GitHub Secrets**: [GitHub Secrets Quick Reference](./secrets)
-- **Infrastructure**: [infra/README.md](https://github.com/adamhalasz/backtest/blob/main/infra/README.md)
-- **Root README**: [README.md](https://github.com/adamhalasz/backtest/blob/main/README.md)
-
-## Commands
+### 1. Check that the API is reachable
 
 ```bash
-# Start all services locally
-pnpm dev
-
-# Type check everything
-pnpm typecheck
-
-# Build for production
-pnpm build
-
-# Deploy everything
-pnpm run deploy:all
-
-# Deploy individual services
-pnpm deploy:backend
-pnpm deploy:frontend
-pnpm deploy:admin
-pnpm deploy:docs
-pnpm deploy:landing
+curl https://api.quantago.co/api/health
 ```
 
-## Verification
+Expected response:
 
-Before deploying, verify:
-- All required secrets are configured
-- Database migrations have been applied
-- The `market_data` ClickHouse database exists
-- `npx wrangler whoami` succeeds
-- The `quantago-app` and `quantago-admin` Pages projects exist
+```json
+{
+  "ok": true
+}
+```
+
+### 2. Start an authenticated session
+
+Quantago uses session-based auth for most application routes. The exact sign-in flow is handled by Better Auth, but once authenticated, your client sends the session cookie on protected routes.
+
+Use [Authentication](/api/authentication) for the request model.
+
+### 3. Pull market data
+
+```bash
+curl "https://api.quantago.co/api/market-data/ticks?symbol=AAPL&startDate=2025-01-01&endDate=2025-01-31&timeframe=1d"
+```
+
+### 4. Queue a backtest
+
+```bash
+curl -X POST https://api.quantago.co/api/backtests \
+  -H 'Content-Type: application/json' \
+  -b cookies.txt \
+  -d '{
+    "backtest": {
+      "symbol": "AAPL",
+      "exchange": "nasdaq",
+      "strategy": "Momentum Strategy",
+      "start_date": "2025-01-01",
+      "end_date": "2025-03-31",
+      "initial_balance": 10000,
+      "parameters": {
+        "timeframe": "1d"
+      }
+    }
+  }'
+```
+
+### 5. Bring your own strategy runtime if needed
+
+- Use [Python SDK](/runtimes/python-sdk) if your research stack is Python-first.
+- Use [WASM Runtime](/runtimes/wasm) if you want a deployable binary artifact.
+
+## Integration Checklist
+
+- You know which endpoints are public and which require a session.
+- You understand that backtests are queued and return `202 Accepted`.
+- You know whether your strategy will be native, remote, or WASM.
+- You know whether you are using Quantago as a hosted service or self-hosting the stack.
+
+## What This Site Covers
+
+- how the platform works conceptually
+- how to talk to the REST API
+- how to build strategy integrations in Python and WASM
+- how to self-host the full platform
+
+Use the repository README for source-level setup and contributor workflow. Use this site for the platform guide.
