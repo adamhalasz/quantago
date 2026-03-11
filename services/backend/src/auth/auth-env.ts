@@ -67,8 +67,13 @@ export const getFrontendOrigin = (env: BackendEnv) => normalizeOrigin(env.FRONTE
 export const getTrustedOrigins = (env: BackendEnv, request?: Request) => {
 	const origins = [getFrontendOrigin(env), getAdminOrigin(env), getAuthBaseUrl(env, request)];
 	const requestOrigin = getRequestOrigin(request);
+	const sameSiteCandidates = [getFrontendOrigin(env), getAdminOrigin(env), getAuthBaseUrl(env, request)].filter(Boolean);
 
 	if (requestOrigin && isDefaultPagesOrigin(requestOrigin)) {
+		origins.push(requestOrigin);
+	}
+
+	if (requestOrigin && sameSiteCandidates.some((candidate) => isSameSiteOrigin(requestOrigin, candidate))) {
 		origins.push(requestOrigin);
 	}
 
